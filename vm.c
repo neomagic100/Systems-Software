@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #define MAX_PAS_LENGTH 500
-//#define MAX_INSTRUCTIONS 24
+
 
 int base(int);
 
@@ -52,6 +53,9 @@ int main(int argc, char **argv) {
 
     // Instruction Loop
     while (Halt == 1) {
+        char opStr[4];
+        int initialPC = PC;
+
         /* FETCH */
 
         // Get Instruction
@@ -67,6 +71,7 @@ int main(int argc, char **argv) {
             case 1: // LIT
                 SP++;
                 pas[SP] = ir.m;
+                strcpy(opStr, "LIT");
                 break;
 
             case 2: // OPR
@@ -133,16 +138,19 @@ int main(int argc, char **argv) {
                         printf("Error in OPR case switch\n");
                         break;
                 } // End OPR switch
+                strcpy(opStr, "OPR");
                 break;
 
             case 3: // LOD
                 SP++;
                 pas[SP] = pas[base(ir.l) + ir.m];
+                strcpy(opStr, "LOD");
                 break;
 
             case 4: // STO
                 pas[base(ir.l) + ir.m] = pas[SP];
                 SP--;
+                strcpy(opStr, "STO");
                 break;
 
             case 5: // CAL
@@ -151,20 +159,24 @@ int main(int argc, char **argv) {
                 pas[SP + 3] = PC;         // return address
                 BP = SP + 1;
                 PC = ir.m;
+                strcpy(opStr, "CAL");
                 break;
 
             case 6: // INC
                 SP = SP + ir.m;
+                strcpy(opStr, "INC");
                 break;
 
             case 7: // JMP
                 PC = ir.m;
+                strcpy(opStr, "JMP");
                 break;
 
             case 8: // JPC
                 if (pas[SP] == 1)
                     PC = ir.m;
                 SP--;
+                strcpy(opStr, "JPC");
                 break;
 
             case 9: // SYS
@@ -179,6 +191,7 @@ int main(int argc, char **argv) {
                 else if (ir.m == 3) {
                     Halt = 0;
                 }
+                strcpy(opStr, "SYS");
                 break;
 
             default:
@@ -189,6 +202,8 @@ int main(int argc, char **argv) {
         } // end op switch
 
         //TODO Print status to file
+        printf("%d %s %d %d\t%d\t%d\t%d", initialPC, opStr, ir.l, ir.m, PC, BP, SP);
+        printf("\n");
 
     } // end instruction while loop
 
