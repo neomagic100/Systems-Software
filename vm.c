@@ -19,7 +19,7 @@ int pas[MAX_PAS_LENGTH];
 int main(int argc, char **argv) {
     // Get input file from command line
     FILE* inputFile;
-    inputFile = fopen(argv[1], "r");
+    int temp;
 
     // Initialize stack
     for (int i = 0; i < MAX_PAS_LENGTH; i++)
@@ -29,7 +29,18 @@ int main(int argc, char **argv) {
     iReg ir;
     ir.op = ir.l = ir.m = 0;
 
+    // Read file into text segment
+    inputFile = fopen(argv[1], "r");
+    
+    while (fscanf(inputFile, "%d", &pas[SP]) != -1) {
+        fscanf(inputFile, " %d %d\n", &pas[SP + 1], &pas[SP + 2]);
+        SP += 3;
+    }
+    fclose(inputFile);
 
+    // Set BP to next open index and SP to last index of text segment
+    BP = SP;
+    SP--;
 
     // FETCH
 
