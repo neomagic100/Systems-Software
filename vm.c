@@ -70,7 +70,69 @@ int main(int argc, char **argv) {
                 break;
 
             case 2: // OPR
-                //TODO
+                // Determine action based on M field on instruction
+                switch (ir.m) {
+                    case 0: // RTN
+                        //TODO
+                        break;
+
+                    case 1: // NEG
+                        //TODO
+                        break;
+
+                    case 2: // ADD
+                        //TODO
+                        break;
+
+                    case 3: // SUB
+                        //TODO
+                        break;
+                    
+                    case 4: // MUL
+                        //TODO
+                        break;
+
+                    case 5: // DIV
+                        //TODO
+                        break;
+
+                    case 6: // ODD
+                        //TODO
+                        break;
+
+                    case 7: // MOD
+                        //TODO
+                        break;
+                    
+                    case 8: // EQL
+                        //TODO
+                        break;
+
+                    case 9: // NEQ
+                        //TODO
+                        break;
+
+                    case 10: // LSS
+                        //TODO
+                        break;
+
+                    case 11: // LEQ
+                        //TODO
+                        break;
+                    
+                    case 12: // GTR
+                        //TODO
+                        break;
+
+                    case 13: // GEQ
+                        //TODO
+                        break;
+
+                    default:
+                        // FIXME
+                        printf("Error in OPR case switch\n");
+                        break;
+                }
                 break;
 
             case 3: // LOD
