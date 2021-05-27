@@ -3,6 +3,8 @@
 #define MAX_PAS_LENGTH 500
 //#define MAX_INSTRUCTIONS 24
 
+int base(int);
+
 typedef struct instruction_registry {
     int op;
     int l;
@@ -62,35 +64,65 @@ int main(int argc, char **argv) {
 
         // Determine action based on op code
         switch(ir.op) {
-            case 1:
+            case 1: // LIT
+                SP++;
+                pas[SP] = ir.m;
+                break;
+
+            case 2: // OPR
                 //TODO
                 break;
-            case 2:
-                //TODO
+
+            case 3: // LOD
+                SP++;
+                pas[SP] = pas[base(ir.l) + ir.m];
                 break;
-            case 3:
-                //TODO
+
+            case 4: // STO
+                pas[base(ir.l) + ir.m] = pas[SP];
+                SP--;
                 break;
-            case 4:
-                //TODO
+
+            case 5: // CAL
+                pas[SP + 1] = base(ir.l); // static link
+                pas[SP + 2] = BP;         // dynamic link
+                pas[SP + 3] = PC;         // return address
+                BP = SP + 1;
+                PC = ir.m;
                 break;
-            case 5:
-                //TODO
+
+            case 6: // INC
+                SP = SP + ir.m;
                 break;
-            case 6:
-                //TODO
+
+            case 7: // JMP
+                PC = ir.m;
                 break;
-            case 7:
-                //TODO
+
+            case 8: // JPC
+                if (pas[SP] == 1)
+                    PC = ir.m;
+                SP--;
                 break;
-            case 8:
-                //TODO
+
+            case 9: // SYS
+                if (ir.m == 1) {
+                    printf("%d", pas[SP]);
+                    SP--;
+                }
+                else if (ir.m == 2) {
+                    SP++;
+                    scanf("%d", &pas[SP]);
+                }
+                else if (ir.m == 3) {
+                    Halt = 0;
+                }
                 break;
-            case 9:
-                //TODO
-                break;
+
             default:
-                //TODO
+                // FIXME
+                printf("Error in op switch\n");
+                Halt = 0;
                 break;
         } // end op switch
 
