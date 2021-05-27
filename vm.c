@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
                         // FIXME
                         printf("Error in OPR case switch\n");
                         break;
-                }
+                } // End OPR switch
                 break;
 
             case 3: // LOD
@@ -188,6 +188,7 @@ int main(int argc, char **argv) {
                 break;
         } // end op switch
 
+        //TODO Print status to file
 
     } // end instruction while loop
 
