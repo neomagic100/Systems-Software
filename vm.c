@@ -18,7 +18,7 @@ int pas[MAX_PAS_LENGTH];
 
 int main(int argc, char **argv) {
     // Get input file from command line
-    FILE* inputFile;
+    FILE* inputFile, *outFile;
     int temp;
 
     // Initialize stack
@@ -42,11 +42,64 @@ int main(int argc, char **argv) {
     BP = SP;
     SP--;
 
-    // FETCH
+    // Open output file to print results and print initial values
+    outFile = fopen("output.txt", "w");
+    fprintf(outFile, "                PC\tBP\tSP\tStack\n");
+    fprintf(outFile, "Initial values: %2d\t%2d\t%2d\n", PC, BP, SP);
 
 
-    // EXECUTE
+    // Instruction Loop
+    while (Halt == 1) {
+        /* FETCH */
 
+        // Get Instruction
+        ir.op = pas[PC];
+        ir.l = pas[PC + 1];
+        ir.m = pas[PC + 2];
+        PC += 3;
+
+        /* EXECUTE */
+
+        // Determine action based on op code
+        switch(ir.op) {
+            case 1:
+                //TODO
+                break;
+            case 2:
+                //TODO
+                break;
+            case 3:
+                //TODO
+                break;
+            case 4:
+                //TODO
+                break;
+            case 5:
+                //TODO
+                break;
+            case 6:
+                //TODO
+                break;
+            case 7:
+                //TODO
+                break;
+            case 8:
+                //TODO
+                break;
+            case 9:
+                //TODO
+                break;
+            default:
+                //TODO
+                break;
+        } // end op switch
+
+
+    } // end instruction while loop
+
+
+    
+    fclose(outFile);
     return 0;
 }
 
