@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #define MAX_PAS_LENGTH 500
 
 
@@ -23,10 +24,14 @@ int main(int argc, char **argv) {
     // Get input file from command line
     FILE* inputFile, *outFile;
     int temp;
+    int AR[MAX_PAS_LENGTH], arIdx, stackBase;
 
     // Initialize stack
     for (int i = 0; i < MAX_PAS_LENGTH; i++)
+    {    
         pas[i] = 0;
+        AR[i] = -1;
+    }
 
     // Declare instruction registry and initialize fields to 0
     iReg ir;
@@ -42,13 +47,13 @@ int main(int argc, char **argv) {
     fclose(inputFile);
 
     // Set BP to next open index and SP to last index of text segment
+    stackBase = SP;
     BP = SP;
     SP--;
 
-    // Open output file to print results and print initial values
-    outFile = fopen("output.txt", "w");
-    fprintf(outFile, "                PC\tBP\tSP\tStack\n");
-    fprintf(outFile, "Initial values: %2d\t%2d\t%2d\n", PC, BP, SP);
+    // Print results and print initial values
+    printf("\n\n\t\tPC      BP      SP      stack\n");
+    printf("Initial values: %2d      %2d      %2d\n", PC, BP, SP);
 
 
     // Instruction Loop
@@ -78,59 +83,72 @@ int main(int argc, char **argv) {
                 // Determine action based on M field on instruction
                 switch (ir.m) {
                     case 0: // RTN
-                        //TODO
+                        SP = BP - 1;
+                        BP = pas[SP + 2];
+                        PC = pas[SP + 3];
                         break;
 
                     case 1: // NEG
-                        //TODO
+                        pas[SP] = (-1) * pas[SP];
                         break;
 
                     case 2: // ADD
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] + pas[SP + 1];
                         break;
 
                     case 3: // SUB
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] - pas[SP + 1];
                         break;
                     
                     case 4: // MUL
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] * pas[SP + 1];
                         break;
 
                     case 5: // DIV
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] / pas[SP + 1];
                         break;
 
                     case 6: // ODD
-                        //TODO
+                        pas[SP] = pas[SP] % 2;
                         break;
 
                     case 7: // MOD
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] % pas[SP + 1];
                         break;
                     
                     case 8: // EQL
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] == pas[SP + 1];
                         break;
 
                     case 9: // NEQ
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] != pas[SP + 1];
                         break;
 
                     case 10: // LSS
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] < pas[SP + 1];
                         break;
 
                     case 11: // LEQ
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] <= pas[SP + 1];
                         break;
                     
                     case 12: // GTR
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] > pas[SP + 1];
                         break;
 
                     case 13: // GEQ
-                        //TODO
+                        SP--;
+                        pas[SP] = pas[SP] >= pas[SP + 1];
                         break;
 
                     default:
@@ -154,6 +172,16 @@ int main(int argc, char **argv) {
                 break;
 
             case 5: // CAL
+
+                for (int i = 0; i < MAX_PAS_LENGTH; i++)
+                {
+                    if (AR[i] == -1)
+                    {
+                        AR[i] = SP;
+                        break;
+                    }
+                }
+
                 pas[SP + 1] = base(ir.l); // static link
                 pas[SP + 2] = BP;         // dynamic link
                 pas[SP + 3] = PC;         // return address
@@ -181,10 +209,11 @@ int main(int argc, char **argv) {
 
             case 9: // SYS
                 if (ir.m == 1) {
-                    printf("%d", pas[SP]);
+                    printf("Top of Stack Value: %d\n", pas[SP]);
                     SP--;
                 }
                 else if (ir.m == 2) {
+                    printf("Please Enter an Integer: ");
                     SP++;
                     scanf("%d", &pas[SP]);
                 }
@@ -201,8 +230,24 @@ int main(int argc, char **argv) {
                 break;
         } // end op switch
 
-        //TODO Print status to file
-        printf("%d %s %d %d\t%d\t%d\t%d", initialPC, opStr, ir.l, ir.m, PC, BP, SP);
+        // Print status to file
+        printf("%2d  %s %2d %2d\t%2d\t%2d\t%2d\t", initialPC, opStr, ir.l,
+                ir.m, PC, BP, SP);
+        
+        arIdx = 0;
+
+        // Print out stack
+        for (int i = stackBase; i <= SP; i++)
+        {
+            printf("%d ", pas[i]);
+
+            if (AR[arIdx] == i && i < SP)
+            {
+                printf("| ");
+                arIdx++;
+            }
+        }
+
         printf("\n");
 
     } // end instruction while loop
@@ -226,5 +271,6 @@ int base(int L)
 		arb = pas[arb];
 		L--;
 	}
+
 	return arb;
 }
