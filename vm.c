@@ -22,13 +22,13 @@ int pas[MAX_PAS_LENGTH];
 
 int main(int argc, char **argv) {
     // Get input file from command line
-    FILE* inputFile, *outFile;
+    FILE* inputFile;
     int temp;
     int AR[MAX_PAS_LENGTH], arIdx, stackBase;
 
     // Initialize stack
     for (int i = 0; i < MAX_PAS_LENGTH; i++)
-    {    
+    {
         pas[i] = 0;
         AR[i] = -1;
     }
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 
     // Read file into text segment
     inputFile = fopen(argv[1], "r");
-    
+
     while (fscanf(inputFile, "%d", &pas[SP]) != -1) {
         fscanf(inputFile, " %d %d\n", &pas[SP + 1], &pas[SP + 2]);
         SP += 3;
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     stackBase = SP;
     BP = SP;
     SP--;
-
+    
     // Print results and print initial values
     printf("\n\n\t\tPC      BP      SP      stack\n");
     printf("Initial values: %2d      %2d      %2d\n", PC, BP, SP);
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
                         SP--;
                         pas[SP] = pas[SP] - pas[SP + 1];
                         break;
-                    
+
                     case 4: // MUL
                         SP--;
                         pas[SP] = pas[SP] * pas[SP + 1];
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
                         SP--;
                         pas[SP] = pas[SP] % pas[SP + 1];
                         break;
-                    
+
                     case 8: // EQL
                         SP--;
                         pas[SP] = pas[SP] == pas[SP + 1];
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
                         SP--;
                         pas[SP] = pas[SP] <= pas[SP + 1];
                         break;
-                    
+
                     case 12: // GTR
                         SP--;
                         pas[SP] = pas[SP] > pas[SP + 1];
@@ -185,6 +185,7 @@ int main(int argc, char **argv) {
                 pas[SP + 1] = base(ir.l); // static link
                 pas[SP + 2] = BP;         // dynamic link
                 pas[SP + 3] = PC;         // return address
+               
                 BP = SP + 1;
                 PC = ir.m;
                 strcpy(opStr, "CAL");
@@ -233,7 +234,7 @@ int main(int argc, char **argv) {
         // Print status to file
         printf("%2d  %s %2d %2d\t%2d\t%2d\t%2d\t", initialPC, opStr, ir.l,
                 ir.m, PC, BP, SP);
-        
+
         arIdx = 0;
 
         // Print out stack
@@ -253,8 +254,6 @@ int main(int argc, char **argv) {
     } // end instruction while loop
 
 
-    
-    fclose(outFile);
     return 0;
 }
 
@@ -262,7 +261,7 @@ int main(int argc, char **argv) {
 /*		Find base L levels down		 */
 /*							 */
 /**********************************************/
- 
+
 int base(int L)
 {
 	int arb = BP;	// arb = activation record base
