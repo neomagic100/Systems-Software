@@ -1,9 +1,14 @@
+/*********************************************************************
+ *  Assignment 1: P-Machine (Virtual Machine)
+ *  COP 3402
+ *  Authors: Willow
+ *           Michael Bernhardt
+ *********************************************************************/
+
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #define MAX_PAS_LENGTH 500
-
 
 int base(int);
 
@@ -166,7 +171,6 @@ int main(int argc, char **argv) {
                         break;
 
                     default:
-                        // FIXME
                         printf("Error in OPR case switch\n");
                         break;
                 } // End OPR switch
@@ -238,7 +242,6 @@ int main(int argc, char **argv) {
                 break;
 
             default:
-                // FIXME
                 printf("Error in op switch\n");
                 Halt = 0;
                 break;
