@@ -1,6 +1,6 @@
 Homework #1 (P-Machine)
 
-Authors: Willow
+Authors: Willow Maddox
 		 Michael Bernhardt
 
 Compiling:

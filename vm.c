@@ -1,7 +1,7 @@
 /*********************************************************************
  *  Assignment 1: P-Machine (Virtual Machine)                        *
  *  COP 3402                                                         *
- *  Authors: Willow                                                  *
+ *  Authors: Willow Maddox                                                *
  *           Michael Bernhardt                                       *
  *********************************************************************/
 
@@ -246,10 +246,11 @@ int main(int argc, char **argv) {
                 strcpy(opStr, "SYS");
                 break;
 
+            // Prints error and exits if wrong input
             default:
                 printf("Error in op switch\n");
-                Halt = 0;
-                break;
+                exit(0);
+
         } // end op switch
 
         // Print status to file
