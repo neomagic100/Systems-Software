@@ -1,8 +1,8 @@
 /*********************************************************************
- *  Assignment 1: P-Machine (Virtual Machine)
- *  COP 3402
- *  Authors: Willow
- *           Michael Bernhardt
+ *  Assignment 1: P-Machine (Virtual Machine)                        *
+ *  COP 3402                                                         *
+ *  Authors: Willow                                                  *
+ *           Michael Bernhardt                                       *
  *********************************************************************/
 
 #include <stdio.h>
@@ -13,22 +13,27 @@
 int base(int);
 
 typedef struct instruction_registry {
-    int op;
-    int l;
-    int m;
+    int op; // Op code
+    int l;  // Legicographical level
+    int m;  // Variable determined by Op code
 } iReg;
 
-int PC = 0,
-    BP = 0,
-    SP = 0,
-    Halt = 1;
+int PC = 0,     // Program Counter
+    BP = 0,     // Base Pointer
+    SP = 0,     // Stack Pointer
+    Halt = 1;   // Halt flag
 
-int pas[MAX_PAS_LENGTH];
+int pas[MAX_PAS_LENGTH]; // Process Address Space
 
 int main(int argc, char **argv) {
-    // Get input file from command line
+    
+    // Make sure file name was entered in command line
+    if (argc < 2) {
+        printf("Invalid or no input file specified.\n\n");
+        return 0;
+    }
+
     FILE* inputFile;
-    int temp;
     int AR[MAX_PAS_LENGTH], arIdx, stackBase;
 
     // Initialize stack
@@ -42,7 +47,7 @@ int main(int argc, char **argv) {
     iReg ir;
     ir.op = ir.l = ir.m = 0;
 
-    // Read file into text segment
+    // Read file from command line into text segment
     inputFile = fopen(argv[1], "r");
 
     while (fscanf(inputFile, "%d", &pas[SP]) != -1) {
