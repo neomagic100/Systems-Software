@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     
     // Print results and print initial values
     printf("\n\n\t\tPC      BP      SP      stack\n");
-    printf("Initial values: %2d      %2d      %2d\n", PC, BP, SP);
+    printf("Initial values: %2d      %2d      %2d\n\n", PC, BP, SP);
 
 
     // Instruction Loop
@@ -86,69 +86,83 @@ int main(int argc, char **argv) {
                         SP = BP - 1;
                         BP = pas[SP + 2];
                         PC = pas[SP + 3];
+                        strcpy(opStr, "RTN");
                         break;
 
                     case 1: // NEG
                         pas[SP] = (-1) * pas[SP];
+                        strcpy(opStr, "NEG");
                         break;
 
                     case 2: // ADD
                         SP--;
                         pas[SP] = pas[SP] + pas[SP + 1];
+                        strcpy(opStr, "ADD");
                         break;
 
                     case 3: // SUB
                         SP--;
                         pas[SP] = pas[SP] - pas[SP + 1];
+                        strcpy(opStr, "SUB");
                         break;
 
                     case 4: // MUL
                         SP--;
                         pas[SP] = pas[SP] * pas[SP + 1];
+                        strcpy(opStr, "MUL");
                         break;
 
                     case 5: // DIV
                         SP--;
                         pas[SP] = pas[SP] / pas[SP + 1];
+                        strcpy(opStr, "DIV");
                         break;
 
                     case 6: // ODD
                         pas[SP] = pas[SP] % 2;
+                        strcpy(opStr, "ODD");
                         break;
 
                     case 7: // MOD
                         SP--;
                         pas[SP] = pas[SP] % pas[SP + 1];
+                        strcpy(opStr, "MOD");
                         break;
 
                     case 8: // EQL
                         SP--;
                         pas[SP] = pas[SP] == pas[SP + 1];
+                        strcpy(opStr, "EQL");
                         break;
 
                     case 9: // NEQ
                         SP--;
                         pas[SP] = pas[SP] != pas[SP + 1];
+                        strcpy(opStr, "NEQ");
                         break;
 
                     case 10: // LSS
                         SP--;
                         pas[SP] = pas[SP] < pas[SP + 1];
+                        strcpy(opStr, "LSS");
                         break;
 
                     case 11: // LEQ
                         SP--;
                         pas[SP] = pas[SP] <= pas[SP + 1];
+                        strcpy(opStr, "LEQ");
                         break;
 
                     case 12: // GTR
                         SP--;
                         pas[SP] = pas[SP] > pas[SP + 1];
+                        strcpy(opStr, "GTR");
                         break;
 
                     case 13: // GEQ
                         SP--;
                         pas[SP] = pas[SP] >= pas[SP + 1];
+                        strcpy(opStr, "GEQ");
                         break;
 
                     default:
@@ -156,7 +170,6 @@ int main(int argc, char **argv) {
                         printf("Error in OPR case switch\n");
                         break;
                 } // End OPR switch
-                strcpy(opStr, "OPR");
                 break;
 
             case 3: // LOD
@@ -253,6 +266,7 @@ int main(int argc, char **argv) {
 
     } // end instruction while loop
 
+    printf("\n");
 
     return 0;
 }
