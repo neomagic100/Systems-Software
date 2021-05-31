@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
             // Prints error and exits if wrong input
             default:
                 printf("Error in op switch\n");
-                exit(0);
+                return -1;
         } // end op switch
 
         // Print status to console
