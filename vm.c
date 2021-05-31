@@ -1,7 +1,7 @@
 /*********************************************************************
  *  Assignment 1: P-Machine (Virtual Machine)                        *
  *  COP 3402                                                         *
- *  Authors: Willow Maddox                                                *
+ *  Authors: Willow                                                  *
  *           Michael Bernhardt                                       *
  *********************************************************************/
 
@@ -34,15 +34,12 @@ int main(int argc, char **argv) {
     }
 
     FILE* inputFile;
-    int AR[MAX_PAS_LENGTH], arIdx, stackBase;
+    int stackBase;
 
     // Initialize stack
     for (int i = 0; i < MAX_PAS_LENGTH; i++)
-    {
         pas[i] = 0;
-        AR[i] = -1;
-    }
-
+      
     // Declare instruction registry and initialize fields to 0
     iReg ir;
     ir.op = ir.l = ir.m = 0;
@@ -64,7 +61,6 @@ int main(int argc, char **argv) {
     // Print results and print initial values
     printf("\n\n\t\tPC      BP      SP      stack\n");
     printf("Initial values: %2d      %2d      %2d\n\n", PC, BP, SP);
-
 
     // Instruction Loop
     while (Halt == 1) {
@@ -141,37 +137,37 @@ int main(int argc, char **argv) {
 
                     case 8: // EQL
                         SP--;
-                        pas[SP] = pas[SP] == pas[SP + 1];
+                        pas[SP] = (pas[SP] == pas[SP + 1]);
                         strcpy(opStr, "EQL");
                         break;
 
                     case 9: // NEQ
                         SP--;
-                        pas[SP] = pas[SP] != pas[SP + 1];
+                        pas[SP] = (pas[SP] != pas[SP + 1]);
                         strcpy(opStr, "NEQ");
                         break;
 
                     case 10: // LSS
                         SP--;
-                        pas[SP] = pas[SP] < pas[SP + 1];
+                        pas[SP] = (pas[SP] < pas[SP + 1]);
                         strcpy(opStr, "LSS");
                         break;
 
                     case 11: // LEQ
                         SP--;
-                        pas[SP] = pas[SP] <= pas[SP + 1];
+                        pas[SP] = (pas[SP] <= pas[SP + 1]);
                         strcpy(opStr, "LEQ");
                         break;
 
                     case 12: // GTR
                         SP--;
-                        pas[SP] = pas[SP] > pas[SP + 1];
+                        pas[SP] = (pas[SP] > pas[SP + 1]);
                         strcpy(opStr, "GTR");
                         break;
 
                     case 13: // GEQ
                         SP--;
-                        pas[SP] = pas[SP] >= pas[SP + 1];
+                        pas[SP] = (pas[SP] >= pas[SP + 1]);
                         strcpy(opStr, "GEQ");
                         break;
 
@@ -194,16 +190,6 @@ int main(int argc, char **argv) {
                 break;
 
             case 5: // CAL
-
-                for (int i = 0; i < MAX_PAS_LENGTH; i++)
-                {
-                    if (AR[i] == -1)
-                    {
-                        AR[i] = SP;
-                        break;
-                    }
-                }
-
                 pas[SP + 1] = base(ir.l); // static link
                 pas[SP + 2] = BP;         // dynamic link
                 pas[SP + 3] = PC;         // return address
@@ -246,29 +232,32 @@ int main(int argc, char **argv) {
                 strcpy(opStr, "SYS");
                 break;
 
-            // Prints error and exits if wrong input
             default:
                 printf("Error in op switch\n");
-                exit(0);
-
+                Halt = 0;
+                break;
         } // end op switch
 
-        // Print status to file
+        // Print status to console
         printf("%2d  %s %2d %2d\t%2d\t%2d\t%2d\t", initialPC, opStr, ir.l,
                 ir.m, PC, BP, SP);
+                
+        int maxLs = 0;
 
-        arIdx = 0;
+        // Find out how many lexicographical levels there are
+        while (base(maxLs) > stackBase)
+            maxLs++;
+        
+        // Print the segment of the stack for each level
+        for (; maxLs >= 0; maxLs--) {
+            int currBP = base(maxLs);
+            int currSP = (maxLs == 0) ? SP : base(maxLs - 1) - 1;
 
-        // Print out stack
-        for (int i = stackBase; i <= SP; i++)
-        {
-            printf("%d ", pas[i]);
+            for (int i = currBP; i <= currSP; i++)
+                printf("%d ", pas[i]);
 
-            if (AR[arIdx] == i && i < SP)
-            {
+            if (currBP < BP)
                 printf("| ");
-                arIdx++;
-            }
         }
 
         printf("\n");
