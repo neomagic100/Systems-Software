@@ -26,7 +26,7 @@ int PC = 0,     // Program Counter
 int pas[MAX_PAS_LENGTH]; // Process Address Space
 
 int main(int argc, char **argv) {
-    
+
     // Make sure file name was entered in command line
     if (argc < 2) {
         printf("Invalid or no input file specified.\n\n");
@@ -35,16 +35,14 @@ int main(int argc, char **argv) {
 
     FILE* inputFile;
     int stackBase;
+    iReg ir; // Declare instruction registry and initialize fields to 0
+    ir.op = ir.l = ir.m = 0;
 
     // Initialize stack
     for (int i = 0; i < MAX_PAS_LENGTH; i++)
         pas[i] = 0;
-      
-    // Declare instruction registry and initialize fields to 0
-    iReg ir;
-    ir.op = ir.l = ir.m = 0;
 
-    // Read file from command line into text segment
+    // Read file name from command line into text segment
     inputFile = fopen(argv[1], "r");
 
     while (fscanf(inputFile, "%d", &pas[SP]) != -1) {
@@ -57,10 +55,10 @@ int main(int argc, char **argv) {
     stackBase = SP;
     BP = SP;
     SP--;
-    
+
     // Print results and print initial values
-    printf("\n\n\t\tPC      BP      SP      stack\n");
-    printf("Initial values: %2d      %2d      %2d\n\n", PC, BP, SP);
+    printf("\t\tPC      BP      SP      stack\n");
+    printf("Initial values: %2d      %2d      %2d\n", PC, BP, SP);
 
     // Instruction Loop
     while (Halt == 1) {
@@ -172,7 +170,7 @@ int main(int argc, char **argv) {
                         break;
 
                     default:
-                        printf("Error in OPR case switch\n");
+                        printf("Error: Invalid M for Op Code.\n");
                         break;
                 } // End OPR switch
                 break;
@@ -193,7 +191,7 @@ int main(int argc, char **argv) {
                 pas[SP + 1] = base(ir.l); // static link
                 pas[SP + 2] = BP;         // dynamic link
                 pas[SP + 3] = PC;         // return address
-               
+
                 BP = SP + 1;
                 PC = ir.m;
                 strcpy(opStr, "CAL");
@@ -218,13 +216,14 @@ int main(int argc, char **argv) {
 
             case 9: // SYS
                 if (ir.m == 1) {
-                    printf("Top of Stack Value: %d\n", pas[SP]);
+                    printf("Output result is: %d\n", pas[SP]);
                     SP--;
                 }
                 else if (ir.m == 2) {
                     printf("Please Enter an Integer: ");
                     SP++;
                     scanf("%d", &pas[SP]);
+                    printf("\n");
                 }
                 else if (ir.m == 3) {
                     Halt = 0;
@@ -234,20 +233,20 @@ int main(int argc, char **argv) {
 
             // Prints error and exits if wrong input
             default:
-                printf("Error in op switch\n");
+                printf("Error: Invalid Op Code.\n");
                 return -1;
         } // end op switch
 
         // Print status to console
         printf("%2d  %s %2d %2d\t%2d\t%2d\t%2d\t", initialPC, opStr, ir.l,
                 ir.m, PC, BP, SP);
-                
+
         int maxLs = 0;
 
         // Find out how many lexicographical levels there are
         while (base(maxLs) > stackBase)
             maxLs++;
-        
+
         // Print the segment of the stack for each level
         for (; maxLs >= 0; maxLs--) {
             int currBP = base(maxLs);
@@ -256,7 +255,7 @@ int main(int argc, char **argv) {
             for (int i = currBP; i <= currSP; i++)
                 printf("%d ", pas[i]);
 
-            if (currBP < BP)
+            if (currBP < BP && currSP < SP)
                 printf("| ");
         }
 
