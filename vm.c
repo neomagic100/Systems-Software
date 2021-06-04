@@ -137,37 +137,37 @@ int main(int argc, char **argv) {
 
                     case 8: // EQL
                         SP--;
-                        pas[SP] = (pas[SP] == pas[SP + 1]);
+                        pas[SP] = (pas[SP] == pas[SP + 1]) ? 0 : 1;
                         strcpy(opStr, "EQL");
                         break;
 
                     case 9: // NEQ
                         SP--;
-                        pas[SP] = (pas[SP] != pas[SP + 1]);
+                        pas[SP] = (pas[SP] != pas[SP + 1]) ? 0 : 1;
                         strcpy(opStr, "NEQ");
                         break;
 
                     case 10: // LSS
                         SP--;
-                        pas[SP] = (pas[SP] < pas[SP + 1]);
+                        pas[SP] = (pas[SP] < pas[SP + 1]) ? 0 : 1;
                         strcpy(opStr, "LSS");
                         break;
 
                     case 11: // LEQ
                         SP--;
-                        pas[SP] = (pas[SP] <= pas[SP + 1]);
+                        pas[SP] = (pas[SP] <= pas[SP + 1]) ? 0 : 1;
                         strcpy(opStr, "LEQ");
                         break;
 
                     case 12: // GTR
                         SP--;
-                        pas[SP] = (pas[SP] > pas[SP + 1]);
+                        pas[SP] = (pas[SP] > pas[SP + 1]) ? 0 : 1;
                         strcpy(opStr, "GTR");
                         break;
 
                     case 13: // GEQ
                         SP--;
-                        pas[SP] = (pas[SP] >= pas[SP + 1]);
+                        pas[SP] = (pas[SP] >= pas[SP + 1]) ? 0 : 1;
                         strcpy(opStr, "GEQ");
                         break;
 
@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
                 break;
 
             case 8: // JPC
-                if (pas[SP] == 0)
+                if (pas[SP] == 1)
                     PC = ir.m;
                 SP--;
                 strcpy(opStr, "JPC");
