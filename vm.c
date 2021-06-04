@@ -34,13 +34,15 @@ int main(int argc, char **argv) {
     }
 
     FILE* inputFile;
-    int stackBase;
+    int AR[MAX_PAS_LENGTH], arIdx, stackBase;
     iReg ir; // Declare instruction registry and initialize fields to 0
     ir.op = ir.l = ir.m = 0;
 
     // Initialize stack
-    for (int i = 0; i < MAX_PAS_LENGTH; i++)
+    for (int i = 0; i < MAX_PAS_LENGTH; i++) {
         pas[i] = 0;
+        AR[i] = -1;
+    }
 
     // Read file name from command line into text segment
     inputFile = fopen(argv[1], "r");
@@ -188,6 +190,15 @@ int main(int argc, char **argv) {
                 break;
 
             case 5: // CAL
+                for (int i = 0; i < MAX_PAS_LENGTH; i++)
+                {
+                    if (AR[i] == -1)
+                    {
+                        AR[i] = SP;
+                        break;
+                    }
+                }
+
                 pas[SP + 1] = base(ir.l); // static link
                 pas[SP + 2] = BP;         // dynamic link
                 pas[SP + 3] = PC;         // return address
@@ -208,7 +219,7 @@ int main(int argc, char **argv) {
                 break;
 
             case 8: // JPC
-                if (pas[SP] == 1)
+                if (pas[SP] == 0)
                     PC = ir.m;
                 SP--;
                 strcpy(opStr, "JPC");
@@ -241,22 +252,18 @@ int main(int argc, char **argv) {
         printf("%2d  %s %2d %2d\t%2d\t%2d\t%2d\t", initialPC, opStr, ir.l,
                 ir.m, PC, BP, SP);
 
-        int maxLs = 0;
+        arIdx = 0;
 
-        // Find out how many lexicographical levels there are
-        while (base(maxLs) > stackBase)
-            maxLs++;
+        // Print out stack
+        for (int i = stackBase; i <= SP; i++)
+        {
+            printf("%d ", pas[i]);
 
-        // Print the segment of the stack for each level
-        for (; maxLs >= 0; maxLs--) {
-            int currBP = base(maxLs);
-            int currSP = (maxLs == 0) ? SP : base(maxLs - 1) - 1;
-
-            for (int i = currBP; i <= currSP; i++)
-                printf("%d ", pas[i]);
-
-            if (currBP < BP && currSP < SP)
+            if (AR[arIdx] == i && i < SP)
+            {
                 printf("| ");
+                arIdx++;
+            }
         }
 
         printf("\n");
