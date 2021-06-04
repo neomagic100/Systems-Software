@@ -1,7 +1,7 @@
 /*********************************************************************
  *  Assignment 1: P-Machine (Virtual Machine)                        *
  *  COP 3402                                                         *
- *  Authors: Willow Maddox                                                *
+ *  Authors: Willow Maddox                                           *
  *           Michael Bernhardt                                       *
  *********************************************************************/
 
@@ -26,7 +26,7 @@ int PC = 0,     // Program Counter
 int pas[MAX_PAS_LENGTH]; // Process Address Space
 
 int main(int argc, char **argv) {
-    
+
     // Make sure file name was entered in command line
     if (argc < 2) {
         printf("Invalid or no input file specified.\n\n");
@@ -35,19 +35,16 @@ int main(int argc, char **argv) {
 
     FILE* inputFile;
     int AR[MAX_PAS_LENGTH], arIdx, stackBase;
+    iReg ir; // Declare instruction registry and initialize fields to 0
+    ir.op = ir.l = ir.m = 0;
 
     // Initialize stack
-    for (int i = 0; i < MAX_PAS_LENGTH; i++)
-    {
+    for (int i = 0; i < MAX_PAS_LENGTH; i++) {
         pas[i] = 0;
         AR[i] = -1;
     }
 
-    // Declare instruction registry and initialize fields to 0
-    iReg ir;
-    ir.op = ir.l = ir.m = 0;
-
-    // Read file from command line into text segment
+    // Read file name from command line into text segment
     inputFile = fopen(argv[1], "r");
 
     while (fscanf(inputFile, "%d", &pas[SP]) != -1) {
@@ -60,11 +57,10 @@ int main(int argc, char **argv) {
     stackBase = SP;
     BP = SP;
     SP--;
-    
-    // Print results and print initial values
-    printf("\n\n\t\tPC      BP      SP      stack\n");
-    printf("Initial values: %2d      %2d      %2d\n\n", PC, BP, SP);
 
+    // Print results and print initial values
+    printf("\t\tPC      BP      SP      stack\n");
+    printf("Initial values: %2d      %2d      %2d\n", PC, BP, SP);
 
     // Instruction Loop
     while (Halt == 1) {
@@ -141,42 +137,42 @@ int main(int argc, char **argv) {
 
                     case 8: // EQL
                         SP--;
-                        pas[SP] = pas[SP] == pas[SP + 1];
+                        pas[SP] = (pas[SP] == pas[SP + 1]);
                         strcpy(opStr, "EQL");
                         break;
 
                     case 9: // NEQ
                         SP--;
-                        pas[SP] = pas[SP] != pas[SP + 1];
+                        pas[SP] = (pas[SP] != pas[SP + 1]);
                         strcpy(opStr, "NEQ");
                         break;
 
                     case 10: // LSS
                         SP--;
-                        pas[SP] = pas[SP] < pas[SP + 1];
+                        pas[SP] = (pas[SP] < pas[SP + 1]);
                         strcpy(opStr, "LSS");
                         break;
 
                     case 11: // LEQ
                         SP--;
-                        pas[SP] = pas[SP] <= pas[SP + 1];
+                        pas[SP] = (pas[SP] <= pas[SP + 1]);
                         strcpy(opStr, "LEQ");
                         break;
 
                     case 12: // GTR
                         SP--;
-                        pas[SP] = pas[SP] > pas[SP + 1];
+                        pas[SP] = (pas[SP] > pas[SP + 1]);
                         strcpy(opStr, "GTR");
                         break;
 
                     case 13: // GEQ
                         SP--;
-                        pas[SP] = pas[SP] >= pas[SP + 1];
+                        pas[SP] = (pas[SP] >= pas[SP + 1]);
                         strcpy(opStr, "GEQ");
                         break;
 
                     default:
-                        printf("Error in OPR case switch\n");
+                        printf("Error: Invalid M for Op Code.\n");
                         break;
                 } // End OPR switch
                 break;
@@ -194,7 +190,6 @@ int main(int argc, char **argv) {
                 break;
 
             case 5: // CAL
-
                 for (int i = 0; i < MAX_PAS_LENGTH; i++)
                 {
                     if (AR[i] == -1)
@@ -207,7 +202,7 @@ int main(int argc, char **argv) {
                 pas[SP + 1] = base(ir.l); // static link
                 pas[SP + 2] = BP;         // dynamic link
                 pas[SP + 3] = PC;         // return address
-               
+
                 BP = SP + 1;
                 PC = ir.m;
                 strcpy(opStr, "CAL");
@@ -224,7 +219,7 @@ int main(int argc, char **argv) {
                 break;
 
             case 8: // JPC
-                if (pas[SP] == 1)
+                if (pas[SP] == 0)
                     PC = ir.m;
                 SP--;
                 strcpy(opStr, "JPC");
@@ -232,13 +227,14 @@ int main(int argc, char **argv) {
 
             case 9: // SYS
                 if (ir.m == 1) {
-                    printf("Top of Stack Value: %d\n", pas[SP]);
+                    printf("Output result is: %d\n", pas[SP]);
                     SP--;
                 }
                 else if (ir.m == 2) {
                     printf("Please Enter an Integer: ");
                     SP++;
                     scanf("%d", &pas[SP]);
+                    printf("\n");
                 }
                 else if (ir.m == 3) {
                     Halt = 0;
@@ -248,12 +244,11 @@ int main(int argc, char **argv) {
 
             // Prints error and exits if wrong input
             default:
-                printf("Error in op switch\n");
-                exit(0);
-
+                printf("Error: Invalid Op Code.\n");
+                return -1;
         } // end op switch
 
-        // Print status to file
+        // Print status to console
         printf("%2d  %s %2d %2d\t%2d\t%2d\t%2d\t", initialPC, opStr, ir.l,
                 ir.m, PC, BP, SP);
 
