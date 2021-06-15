@@ -12,12 +12,24 @@
 #include <string.h>
 #include "compiler.h"
 
+#define CHAR_MAX 11
+#define INT_MAX 99999
+#define INT_MAX_DIGITS 5
+#define NORW 14 // number of reserved words
+#define NUM_SYM 17 // number of symbols
 
 lexeme *list;
 int lex_index;
 
+//FIXME
+const char symbols[NUM_SYM][3] = {"==", "<>", "<", "<=", ">", ">=", "\%", "*", "/", "+", "-", "(", ")", ",", ".", ";", ":="};
+const char reserved[NORW][10] = {"const", "var", "procedure", "call", "if", "then", "else", "while", "do", 
+									"begin", "end", "read", "write", "odd"};
+
 void printerror(int type);
 void printtokens();
+int isReserved(char* s);
+int isSymbol(char* s);
 
 lexeme *lexanalyzer(char *input)
 {
@@ -25,6 +37,28 @@ lexeme *lexanalyzer(char *input)
 	lex_index = 0;
 	
 	return list;
+}
+
+int isSymbol(char* s)
+{
+	for (int i = 0; i < NUM_SYM; i++)
+	{
+		if (strcmp(s, symbols[i]) == 0)
+			return 1;
+	}
+
+	return 0;
+}
+
+int isReserved(char* s)
+{
+	for (int i = 0; i < NORW; i++)
+	{
+		if (strcmp(s, reserved[i]) == 0)
+			return 1;
+	}
+
+	return 0;
 }
 
 void printtokens()
