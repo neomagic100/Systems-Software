@@ -6,6 +6,12 @@
 	earn the points for compiling
 */
 
+/*	Comment check - if c == '/' and next c is '*', increment lex_index until '*' and "/" read
+		TODO: create stack for / and * ??
+	OR
+	After lexeme list complete, find lexeme for symbols / and *, and delete it along with everything until another * and / found
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -72,6 +78,12 @@ lexeme *lexanalyzer(char *input)
 			list[listIndex++] = currLex;
 			//Test Print
 			//printf("lex name: %s  lex type: %d  lex val: %d\n", currLex.name, currLex.type, currLex.value);
+		}
+
+		// If ch is ignorable character, incrememnt index
+		else if (isspace(ch))
+		{
+			lex_index++;
 		}
 
 		else lex_index++;
