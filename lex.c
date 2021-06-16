@@ -32,6 +32,7 @@ int isReserved(char* s);
 int isSymbol(char* s);
 lexeme createReservedLex(char* s);
 lexeme identOrKeyword(int* lex_i, char* input);
+lexeme tokenizeNum(char* input);
 
 lexeme *lexanalyzer(char *input)
 {
@@ -41,7 +42,7 @@ lexeme *lexanalyzer(char *input)
 
 	char ch;
 	char* curr;
-
+	lexeme currLex;
 	
 
 	while (lex_index < strlen(input))
@@ -52,12 +53,23 @@ lexeme *lexanalyzer(char *input)
 		// If ch char is letter
 		if (isalpha(ch))
 		{
-			lexeme currLex = identOrKeyword(&lex_index, input);
+			currLex = identOrKeyword(&lex_index, input);
 			if (currLex.type == -1)
 				return NULL;
 
 			list[listIndex++] = currLex;
 		}
+
+		// If ch char is a digit
+		else if (isdigit(ch))
+		{
+			currLex = tokenizeNum(input);
+			if (currLex.type == -1)
+				return NULL;
+
+			list[listIndex++] = currLex;
+		}
+
 		else lex_index++;
 	}
 
@@ -153,6 +165,52 @@ int isReserved(char* s)
 	}
 
 	return 0;
+}
+
+lexeme tokenizeNum(char* input)
+{
+	lexeme currLex;
+	int digitCnt = 0;
+	int val = 0;
+	char ch = input[lex_index];
+	char *str[INT_MAX_DIGITS+1];
+
+	// Read in the number until ch is not a digit
+	do
+	{
+		str[digitCnt++] = ch;
+		ch = input[++lex_index];
+
+		// Print error if more than 6 digits
+		if (digitCnt > 5)
+		{
+			printerror(3);
+			currLex.type = -1;
+			return currLex;
+		}
+
+	} while (isdigit(ch));
+	
+	// Print error if digit is immediately followed by letter
+	if (isalpha(ch))
+	{
+		printerror(2);
+		currLex.type = -1;
+		return currLex;
+	}
+
+	// Processes and tokenizes number
+	currLex.type = numbersym;
+	val = (str[0] - '0');
+
+	for (int i = 1; i < digitCnt; i++)
+	{
+		val = (val*10) + (str[i] - '0');
+	}
+
+	currLex.value = val;
+
+	return currLex;
 }
 
 void printtokens()
