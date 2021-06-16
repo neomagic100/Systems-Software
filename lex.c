@@ -2,7 +2,7 @@
 	This is the lex skeleton for the UCF Summer 2021 Systems Software Project
 	Implement the function lexanalyzer, add as many functions and global
 	variables as desired, but do not alter printerror or printtokens.
-	Include your name (and your partner's name) in this comment in order to 
+	Include your name (and your partner's name) in this comment in order to
 	earn the points for compiling
 */
 
@@ -31,7 +31,7 @@ void printtokens();
 int isReserved(char* s);
 int isSymbol(char* s);
 lexeme createReservedLex(char* s);
-lexeme identOrKeyword(int* lex_i, char* input);
+lexeme identOrKeyword(char* input);
 lexeme tokenizeNum(char* input);
 
 lexeme *lexanalyzer(char *input)
@@ -43,8 +43,8 @@ lexeme *lexanalyzer(char *input)
 	char ch;
 	char* curr;
 	lexeme currLex;
-	
 
+	printf("%s\n\n", input);
 	while (lex_index < strlen(input))
 	{
 		// get first char to start analyzing
@@ -53,11 +53,13 @@ lexeme *lexanalyzer(char *input)
 		// If ch char is letter
 		if (isalpha(ch))
 		{
-			currLex = identOrKeyword(&lex_index, input);
+			currLex = identOrKeyword(input);
 			if (currLex.type == -1)
 				return NULL;
 
 			list[listIndex++] = currLex;
+			//Test Print
+			//printf("lex name: %s  lex type: %d  lex val: %d\n", currLex.name, currLex.type, currLex.value);
 		}
 
 		// If ch char is a digit
@@ -68,37 +70,40 @@ lexeme *lexanalyzer(char *input)
 				return NULL;
 
 			list[listIndex++] = currLex;
+			//Test Print
+			//printf("lex name: %s  lex type: %d  lex val: %d\n", currLex.name, currLex.type, currLex.value);
 		}
 
 		else lex_index++;
+
 	}
 
 	return list;
 }
 
-lexeme identOrKeyword(int* lex_i, char* input) 
+lexeme identOrKeyword(char* input)
 {
 	lexeme currLex;
 	int chCnt = 0;
 	char str[CHAR_MAX + 1];
-	char ch = input[*lex_i];
+	char ch = input[lex_index];
 	do
 	{
 		str[chCnt++] = ch; // if first is alpha, put into lexeme
-		*lex_i = *lex_i + 1;
+		lex_index++;
 		ch = input[lex_index];
 	}
 	while (isalnum(ch));
 
 	// At this point, reached end of string with letter (letter | digit)*
 	str[chCnt] = '\0';
-	
+
 	// Check to see if the string is a reserved word
 	if (isReserved(str))
 	{
 		currLex = createReservedLex(str);
 	}
-		
+
 
 	// Check to make sure its <= 11 chars
 	else if (strlen(str) > 11) {
@@ -112,9 +117,6 @@ lexeme identOrKeyword(int* lex_i, char* input)
 		strcpy(currLex.name, str);
 		currLex.type = identsym;
 	}
-
-	//Test Print
-	printf("%s %d\n", currLex.name, currLex.type);
 
 	return currLex;
 }
@@ -173,7 +175,7 @@ lexeme tokenizeNum(char* input)
 	int digitCnt = 0;
 	int val = 0;
 	char ch = input[lex_index];
-	char *str[INT_MAX_DIGITS+1];
+	char str[INT_MAX_DIGITS+1];
 
 	// Read in the number until ch is not a digit
 	do
@@ -190,7 +192,7 @@ lexeme tokenizeNum(char* input)
 		}
 
 	} while (isdigit(ch));
-	
+
 	// Print error if digit is immediately followed by letter
 	if (isalpha(ch))
 	{
@@ -353,7 +355,7 @@ void printerror(int type)
 		printf("Lexical Analyzer Error: Neverending Comment\n");
 	else
 		printf("Implementation Error: Unrecognized Error Type\n");
-	
+
 	free(list);
 	return;
 }
