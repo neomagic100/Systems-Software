@@ -6,12 +6,6 @@
 	earn the points for compiling
 */
 
-/*	Comment check - if c == '/' and next c is '*', increment lex_index until '*' and "/" read
-		TODO: create stack for / and * ??
-	OR
-	After lexeme list complete, find lexeme for symbols / and *, and delete it along with everything until another * and / found
-*/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -23,6 +17,7 @@
 #define INT_MAX_DIGITS 5
 #define NORW 14 // number of reserved words
 #define NUM_SYM 17 // number of symbols
+#define INVALID -1
 
 lexeme *list;
 int lex_index;
@@ -39,6 +34,7 @@ int isSymbol(char* s);
 lexeme createReservedLex(char* s);
 lexeme identOrKeyword(char* input);
 lexeme tokenizeNum(char* input);
+int readComment(char* input, int* listIndex);
 
 lexeme *lexanalyzer(char *input)
 {
@@ -50,17 +46,35 @@ lexeme *lexanalyzer(char *input)
 	char* curr;
 	lexeme currLex;
 
+	// Test: echo input
 	printf("%s\n\n", input);
+
 	while (lex_index < strlen(input))
 	{
 		// get first char to start analyzing
 		ch = input[lex_index];
 
+		// comment check, if ch is * and prev was /
+		if (ch == '*' && list[listIndex - 1].type == slashsym) {
+			if (readComment(input, &listIndex) == -1)
+				return NULL;
+		}
+
+		//FIXME - remove when symbols are tokenized
+		//Test symbol for comment
+		else if (ch == '/') {
+			lexeme currLex;
+			strcpy(currLex.name, "/\0");
+			currLex.type = slashsym;
+			lex_index++;
+			list[listIndex++] = currLex;
+		}
+
 		// If ch char is letter
-		if (isalpha(ch))
+		else if (isalpha(ch))
 		{
 			currLex = identOrKeyword(input);
-			if (currLex.type == -1)
+			if (currLex.type == INVALID)
 				return NULL;
 
 			list[listIndex++] = currLex;
@@ -72,7 +86,7 @@ lexeme *lexanalyzer(char *input)
 		else if (isdigit(ch))
 		{
 			currLex = tokenizeNum(input);
-			if (currLex.type == -1)
+			if (currLex.type == INVALID)
 				return NULL;
 
 			list[listIndex++] = currLex;
@@ -89,8 +103,38 @@ lexeme *lexanalyzer(char *input)
 		else lex_index++;
 
 	}
-
+	printtokens();
 	return list;
+}
+
+int readComment(char* input, int* listIndex)
+{
+	char prevCh;
+	char ch = input[lex_index];
+
+	// Decrement list index and set type of / in list to -1
+	*listIndex = *listIndex - 1;
+	list[*listIndex].type = INVALID;
+	strcpy(list[*listIndex].name, "INVALID");
+	
+	// Proceed through input until * and / are reached
+	do
+	{
+		lex_index++;
+		prevCh = ch;
+		ch = input[lex_index];
+	} while (ch != '/' || prevCh != '*' && lex_index < strlen(input));
+	
+	lex_index++;
+
+	// neverending comment
+	if (lex_index >= strlen(input))
+	{
+		printerror(5);
+		return INVALID;
+	}
+
+	return 1;
 }
 
 lexeme identOrKeyword(char* input)
@@ -120,7 +164,7 @@ lexeme identOrKeyword(char* input)
 	// Check to make sure its <= 11 chars
 	else if (strlen(str) > 11) {
 		printerror(4);
-		currLex.type = -1;
+		currLex.type = INVALID;
 		return currLex;
 	}
 
@@ -199,7 +243,7 @@ lexeme tokenizeNum(char* input)
 		if (digitCnt > 5)
 		{
 			printerror(3);
-			currLex.type = -1;
+			currLex.type = INVALID;
 			return currLex;
 		}
 
@@ -209,7 +253,7 @@ lexeme tokenizeNum(char* input)
 	if (isalpha(ch))
 	{
 		printerror(2);
-		currLex.type = -1;
+		currLex.type = INVALID;
 		return currLex;
 	}
 
@@ -330,7 +374,7 @@ void printtokens()
 				printf("%11s\t%d", "procedure", procsym);
 				break;
 			case identsym:
-				printf("%11s\t%d", list[i], identsym);
+				printf("%11s\t%d", list[i].name, identsym);
 				break;
 			case numbersym:
 				printf("%11d\t%d", list[i].value, numbersym);
@@ -345,7 +389,7 @@ void printtokens()
 		if (list[i].type == numbersym)
 			printf("%d %d ", numbersym, list[i].value);
 		else if (list[i].type == identsym)
-			printf("%d %s ", identsym, list[i]);
+			printf("%d %s ", identsym, list[i].name);
 		else
 			printf("%d ", list[i].type);
 	}
