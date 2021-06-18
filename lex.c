@@ -21,6 +21,7 @@
 
 lexeme *list;
 int lex_index;
+int lex_char_count;
 
 //FIXME
 const char symbols[NUM_SYM][3] = {"==", "<>", "<", "<=", ">", ">=", "%", "*", "/", "+", "-", "(", ")", ",", ".", ";", ":="};
@@ -42,6 +43,8 @@ lexeme *lexanalyzer(char *input)
 {
 	list = malloc(500 * sizeof(lexeme));
 	lex_index = 0;
+
+	lex_char_count = 0;
 	int listIndex = 0;
 
 	char ch;
@@ -51,10 +54,10 @@ lexeme *lexanalyzer(char *input)
 	// Test: echo input
 	printf("%s\n\n", input);
 
-	while (lex_index < strlen(input))
+	while (lex_char_count < strlen(input))
 	{
 		// get first char to start analyzing
-		ch = input[lex_index];
+		ch = input[lex_char_count];
 
 		// comment check, if ch is * and prev was /
 		if (ch == '*' && list[listIndex - 1].type == slashsym) {
@@ -62,15 +65,15 @@ lexeme *lexanalyzer(char *input)
 				return NULL;
 		}
 
-		//FIXME - remove when symbols are tokenized
+		/*FIXME - remove when symbols are tokenized
 		//Test symbol for comment
 		else if (ch == '/') {
 			lexeme currLex;
 			strcpy(currLex.name, "/\0");
 			currLex.type = slashsym;
-			lex_index++;
+			lex_char_count++;
 			list[listIndex++] = currLex;
-		}
+		}*/
 
 		// If ch char is letter
 		else if (isalpha(ch))
@@ -78,7 +81,7 @@ lexeme *lexanalyzer(char *input)
 			currLex = identOrKeyword(input);
 			if (currLex.type == INVALID)
 				return NULL;
-
+			lex_index++;
 			list[listIndex++] = currLex;
 			//Test Print
 			//printf("lex name: %s  lex type: %d  lex val: %d\n", currLex.name, currLex.type, currLex.value);
@@ -90,7 +93,7 @@ lexeme *lexanalyzer(char *input)
 			currLex = tokenizeNum(input);
 			if (currLex.type == INVALID)
 				return NULL;
-
+			lex_index++;
 			list[listIndex++] = currLex;
 			//Test Print
 			//printf("lex name: %s  lex type: %d  lex val: %d\n", currLex.name, currLex.type, currLex.value);
@@ -101,20 +104,31 @@ lexeme *lexanalyzer(char *input)
 		{
 			currLex = tokenizeSymbol(input);
 			if (currLex.type == INVALID)
+			{
+				printerror(1);
 				return NULL;
+			}
 
-			list[listIndex++] = currLex
+			lex_index++;
+			list[listIndex++] = currLex;
 		}
 
 		// If ch is ignorable character, incrememnt index
 		else if (isspace(ch))
 		{
-			lex_index++;
+			lex_char_count++;
 		}
 
-		else lex_index++;
+		else{
+			printf("Tokenize error.\n");
+			lex_char_count++;
+		}
 
 	}
+
+	lex_index--;
+	printf("lex_char_count = %d\n", lex_char_count);
+	printf("lex_index = %d\n", lex_index);
 	printtokens();
 	return list;
 }
@@ -122,12 +136,152 @@ lexeme *lexanalyzer(char *input)
 lexeme tokenizeSymbol(char* input)
 {
 	//TODO
+	lexeme currLex;
+	int chCnt = 0;
+	char str[3];
+	char ch = input[lex_char_count];
+	char ch2 = input[lex_char_count + 1];
+	str[0] = ch;
+	str[1] = ch2;
+	str[3] = '\0';
+
+	switch (ch) {
+		case '=':
+			if (ch2 == '=')
+			{
+				currLex.type = eqlsym;
+				strcpy(currLex.name, str);
+				lex_char_count += 2;
+			}
+			else
+			{
+				currLex.type = INVALID;
+				lex_char_count++;
+			}
+			break;
+		case '<':
+			if (ch2 == '=')
+			{
+				currLex.type = leqsym;
+				strcpy(currLex.name, str);
+				lex_char_count += 2;
+			}
+			else if (ch2 == '>')
+			{
+				currLex.type = neqsym;
+				strcpy(currLex.name, str);
+				lex_char_count += 2;
+			}
+			else
+			{
+				currLex.type = lessym;
+				str[1] = '\0';
+				strcpy(currLex.name, str);
+				lex_char_count++;
+			}
+			break;
+		case '>':
+			if (ch2 == '=')
+			{
+				currLex.type = geqsym;
+				strcpy(currLex.name, str);
+				lex_char_count += 2;
+			}
+			else
+			{
+				currLex.type = gtrsym;
+				str[1] = '\0';
+				strcpy(currLex.name, str);
+				lex_char_count++;
+			}
+			break;
+		case '%':
+			currLex.type = modsym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case '/':
+			currLex.type = slashsym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case '*':
+			currLex.type = multsym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case '+':
+			currLex.type = plussym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case '-':
+			currLex.type = minussym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case '(':
+			currLex.type = lparentsym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case ')':
+			currLex.type = rparentsym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case ',':
+			currLex.type = commasym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case '.':
+			currLex.type = periodsym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case ';':
+			currLex.type = semicolonsym;
+			str[1] = '\0';
+			strcpy(currLex.name, str);
+			lex_char_count++;
+			break;
+		case ':':
+			if (ch2 == '=')
+			{
+				currLex.type = becomessym;
+				strcpy(currLex.name, str);
+				lex_char_count += 2;
+			}
+			else
+			{
+				currLex.type = INVALID;
+				lex_char_count++;
+			}
+			break;
+		default:
+			printf("Symbol problem. ch = %c  ch2 = %c\n", ch, ch2);
+			currLex.type = INVALID;
+			lex_char_count++;
+			break;
+	}
+
+	return currLex;
 }
 
 int readComment(char* input, int* listIndex)
 {
 	char prevCh;
-	char ch = input[lex_index];
+	char ch = input[lex_char_count];
 
 	// Decrement list index and set type of / in list to -1
 	*listIndex = *listIndex - 1;
@@ -137,15 +291,15 @@ int readComment(char* input, int* listIndex)
 	// Proceed through input until * and / are reached
 	do
 	{
-		lex_index++;
+		lex_char_count++;
 		prevCh = ch;
-		ch = input[lex_index];
-	} while (ch != '/' || prevCh != '*' && lex_index < strlen(input));
+		ch = input[lex_char_count];
+	} while (ch != '/' || prevCh != '*' && lex_char_count < strlen(input));
 
-	lex_index++;
+	lex_char_count++;
 
 	// neverending comment
-	if (lex_index >= strlen(input))
+	if (lex_char_count >= strlen(input))
 	{
 		printerror(5);
 		return INVALID;
@@ -159,12 +313,12 @@ lexeme identOrKeyword(char* input)
 	lexeme currLex;
 	int chCnt = 0;
 	char str[CHAR_MAX + 1];
-	char ch = input[lex_index];
+	char ch = input[lex_char_count];
 	do
 	{
 		str[chCnt++] = ch; // if first is alpha, put into lexeme
-		lex_index++;
-		ch = input[lex_index];
+		lex_char_count++;
+		ch = input[lex_char_count];
 	}
 	while (isalnum(ch));
 
@@ -247,14 +401,14 @@ lexeme tokenizeNum(char* input)
 	lexeme currLex;
 	int digitCnt = 0;
 	int val = 0;
-	char ch = input[lex_index];
+	char ch = input[lex_char_count];
 	char str[INT_MAX_DIGITS+1];
 
 	// Read in the number until ch is not a digit
 	do
 	{
 		str[digitCnt++] = ch;
-		ch = input[++lex_index];
+		ch = input[++lex_char_count];
 
 		// Print error if more than 6 digits
 		if (digitCnt > 5)
