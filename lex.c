@@ -30,10 +30,12 @@ const char reserved[NORW][CHAR_MAX] = {"const", "var", "procedure", "call", "if"
 void printerror(int type);
 void printtokens();
 int isReserved(char* s);
-int isSymbol(char* s);
+int issymb(char c);
+int isValidSymbol(char* s);
 lexeme createReservedLex(char* s);
 lexeme identOrKeyword(char* input);
 lexeme tokenizeNum(char* input);
+lexeme tokenizeSymbol(char* input);
 int readComment(char* input, int* listIndex);
 
 lexeme *lexanalyzer(char *input)
@@ -94,6 +96,16 @@ lexeme *lexanalyzer(char *input)
 			//printf("lex name: %s  lex type: %d  lex val: %d\n", currLex.name, currLex.type, currLex.value);
 		}
 
+		// If ch is a symbol
+		else if (issymb(ch))
+		{
+			currLex = tokenizeSymbol(input);
+			if (currLex.type == INVALID)
+				return NULL;
+
+			list[listIndex++] = currLex
+		}
+
 		// If ch is ignorable character, incrememnt index
 		else if (isspace(ch))
 		{
@@ -107,6 +119,11 @@ lexeme *lexanalyzer(char *input)
 	return list;
 }
 
+lexeme tokenizeSymbol(char* input)
+{
+	//TODO
+}
+
 int readComment(char* input, int* listIndex)
 {
 	char prevCh;
@@ -116,7 +133,7 @@ int readComment(char* input, int* listIndex)
 	*listIndex = *listIndex - 1;
 	list[*listIndex].type = INVALID;
 	strcpy(list[*listIndex].name, "INVALID");
-	
+
 	// Proceed through input until * and / are reached
 	do
 	{
@@ -124,7 +141,7 @@ int readComment(char* input, int* listIndex)
 		prevCh = ch;
 		ch = input[lex_index];
 	} while (ch != '/' || prevCh != '*' && lex_index < strlen(input));
-	
+
 	lex_index++;
 
 	// neverending comment
@@ -269,6 +286,32 @@ lexeme tokenizeNum(char* input)
 	currLex.value = val;
 
 	return currLex;
+}
+
+
+
+// Determine if a single character can be part of a valid symbol
+int issymb(char c)
+{
+	char validSyms[] = {'=', '<', '>', '%', '*', '/', '+', '-', '(', ')', ',', '.', ';', ':'};
+	for (int i = 0; i < strlen(validSyms); i++)
+	{
+		if (c == validSyms[i])
+			return 1;
+	}
+
+	return 0;
+}
+
+int isValidSymbol(char* s)
+{
+	for (int i = 0; i < NUM_SYM; i++)
+	{
+		if (strcmp(s, symbols[i]) == 0)
+			return 1;
+	}
+
+	return 0;
 }
 
 void printtokens()
