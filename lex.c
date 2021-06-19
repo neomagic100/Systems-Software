@@ -13,7 +13,6 @@
 #include "compiler.h"
 
 #define CHAR_MAX 11
-#define INT_MAX 99999
 #define INT_MAX_DIGITS 5
 #define NORW 14 // number of reserved words
 #define NUM_SYM 17 // number of symbols
@@ -21,7 +20,7 @@
 
 lexeme *list;
 int lex_index;
-int lex_char_count;
+int input_char_count;
 
 //FIXME
 const char symbols[NUM_SYM][3] = {"==", "<>", "<", "<=", ">", ">=", "%", "*", "/", "+", "-", "(", ")", ",", ".", ";", ":="};
@@ -37,43 +36,31 @@ lexeme createReservedLex(char* s);
 lexeme identOrKeyword(char* input);
 lexeme tokenizeNum(char* input);
 lexeme tokenizeSymbol(char* input);
-int readComment(char* input, int* listIndex);
+int readComment(char* input);
 
 lexeme *lexanalyzer(char *input)
 {
 	list = malloc(500 * sizeof(lexeme));
 	lex_index = 0;
-
-	lex_char_count = 0;
-	int listIndex = 0;
-
+	input_char_count = 0;
 	char ch;
-	char* curr;
-	lexeme currLex;
+	lexeme currLex; // current lexeme being read
 
-	// Test: echo input
-	printf("%s\n\n", input);
-
-	while (lex_char_count < strlen(input))
+	// Tokenize input until all characters are read
+	while (input_char_count < strlen(input))
 	{
 		// get first char to start analyzing
-		ch = input[lex_char_count];
+		ch = input[input_char_count];
 
-		// comment check, if ch is * and prev was /
-		if (ch == '*' && list[listIndex - 1].type == slashsym) {
-			if (readComment(input, &listIndex) == -1)
+		// break if read null character (reached end of input string)
+		if (ch == '\0')
+			break;
+
+		// Comment check, if ch is * and prev was /
+		if (ch == '*' && list[lex_index - 1].type == slashsym) {
+			if (readComment(input) == -1)
 				return NULL;
 		}
-
-		/*FIXME - remove when symbols are tokenized
-		//Test symbol for comment
-		else if (ch == '/') {
-			lexeme currLex;
-			strcpy(currLex.name, "/\0");
-			currLex.type = slashsym;
-			lex_char_count++;
-			list[listIndex++] = currLex;
-		}*/
 
 		// If ch char is letter
 		else if (isalpha(ch))
@@ -81,10 +68,8 @@ lexeme *lexanalyzer(char *input)
 			currLex = identOrKeyword(input);
 			if (currLex.type == INVALID)
 				return NULL;
-			lex_index++;
-			list[listIndex++] = currLex;
-			//Test Print
-			//printf("lex name: %s  lex type: %d  lex val: %d\n", currLex.name, currLex.type, currLex.value);
+
+			list[lex_index++] = currLex;
 		}
 
 		// If ch char is a digit
@@ -93,10 +78,8 @@ lexeme *lexanalyzer(char *input)
 			currLex = tokenizeNum(input);
 			if (currLex.type == INVALID)
 				return NULL;
-			lex_index++;
-			list[listIndex++] = currLex;
-			//Test Print
-			//printf("lex name: %s  lex type: %d  lex val: %d\n", currLex.name, currLex.type, currLex.value);
+
+			list[lex_index++] = currLex;
 		}
 
 		// If ch is a symbol
@@ -109,57 +92,74 @@ lexeme *lexanalyzer(char *input)
 				return NULL;
 			}
 
-			lex_index++;
-			list[listIndex++] = currLex;
+			list[lex_index++] = currLex;
 		}
 
-		// If ch is ignorable character, incrememnt index
+		// If ch is ignorable character (whitespace, tab, or newline), incrememnt input_char_count to skip it
 		else if (isspace(ch))
 		{
-			lex_char_count++;
+			input_char_count++;
 		}
 
-		else{
+		else // Catch for non-conforming cases
+		{
 			printf("Tokenize error.\n");
-			lex_char_count++;
+			input_char_count++;
 		}
 
 	}
 
-	lex_index--;
-	printf("lex_char_count = %d\n", lex_char_count);
-	printf("lex_index = %d\n", lex_index);
 	printtokens();
 	return list;
 }
 
+// Tokenize a symbol read from input
 lexeme tokenizeSymbol(char* input)
 {
 	//TODO
+	lexeme currLex;
+	int chCnt = 0;
+	char str[3];
+	char ch = input[input_char_count];
+	char ch2 = input[input_char_count + 1];
+	str[0] = ch;
+	str[1] = ch2;
+	str[2] = '\0';
+
+	switch (ch) {
+		//TODO
+		default:
+			currLex.type = INVALID;
+			input_char_count++;
+			break;
+	}
+
+	return currLex;
 }
 
-int readComment(char* input, int* listIndex)
+// Read a comment to ignore
+int readComment(char* input)
 {
 	char prevCh;
-	char ch = input[lex_char_count];
+	char ch = input[input_char_count];
 
-	// Decrement list index and set type of / in list to -1
-	*listIndex = *listIndex - 1;
-	list[*listIndex].type = INVALID;
-	strcpy(list[*listIndex].name, "INVALID");
+	// Decrement list index and set type of / in list to -1 to remove lexeme of /
+	lex_index = lex_index - 1;
+	list[lex_index].type = INVALID;
+	strcpy(list[lex_index].name, "INVALID");
 
 	// Proceed through input until * and / are reached
 	do
 	{
-		lex_char_count++;
+		input_char_count++;
 		prevCh = ch;
-		ch = input[lex_char_count];
-	} while (ch != '/' || prevCh != '*' && lex_char_count < strlen(input));
+		ch = input[input_char_count];
+	} while (ch != '/' || prevCh != '*' && input_char_count < strlen(input));
 
-	lex_char_count++;
+	input_char_count++;
 
-	// neverending comment
-	if (lex_char_count >= strlen(input))
+	// Make sure its not a neverending comment
+	if (input_char_count >= strlen(input))
 	{
 		printerror(5);
 		return INVALID;
@@ -168,17 +168,18 @@ int readComment(char* input, int* listIndex)
 	return 1;
 }
 
+// Read in an expression L (D | L)* for an identifier or L+ for keyword
 lexeme identOrKeyword(char* input)
 {
 	lexeme currLex;
 	int chCnt = 0;
 	char str[CHAR_MAX + 1];
-	char ch = input[lex_char_count];
+	char ch = input[input_char_count];
 	do
 	{
 		str[chCnt++] = ch; // if first is alpha, put into lexeme
-		lex_char_count++;
-		ch = input[lex_char_count];
+		input_char_count++;
+		ch = input[input_char_count];
 	}
 	while (isalnum(ch));
 
@@ -191,7 +192,6 @@ lexeme identOrKeyword(char* input)
 		currLex = createReservedLex(str);
 	}
 
-
 	// Check to make sure its <= 11 chars
 	else if (strlen(str) > 11) {
 		printerror(4);
@@ -199,6 +199,7 @@ lexeme identOrKeyword(char* input)
 		return currLex;
 	}
 
+	// Current string read must be an identifier
 	else
 	{
 		strcpy(currLex.name, str);
@@ -208,6 +209,7 @@ lexeme identOrKeyword(char* input)
 	return currLex;
 }
 
+// Create a lexeme for a keyword, given input string s
 lexeme createReservedLex(char* s)
 {
 	lexeme res;
@@ -245,6 +247,7 @@ lexeme createReservedLex(char* s)
 	return res;
 }
 
+// Determine if a string is a reserved keyword
 int isReserved(char* s)
 {
 	for (int i = 0; i < NORW; i++)
@@ -256,19 +259,20 @@ int isReserved(char* s)
 	return 0;
 }
 
+// Create a token for a lexeme of an integer
 lexeme tokenizeNum(char* input)
 {
 	lexeme currLex;
 	int digitCnt = 0;
 	int val = 0;
-	char ch = input[lex_char_count];
+	char ch = input[input_char_count];
 	char str[INT_MAX_DIGITS+1];
 
 	// Read in the number until ch is not a digit
 	do
 	{
 		str[digitCnt++] = ch;
-		ch = input[++lex_char_count];
+		ch = input[++input_char_count];
 
 		// Print error if more than 6 digits
 		if (digitCnt > 5)
@@ -302,12 +306,10 @@ lexeme tokenizeNum(char* input)
 	return currLex;
 }
 
-
-
 // Determine if a single character can be part of a valid symbol
 int issymb(char c)
 {
-	char validSyms[] = {'=', '<', '>', '%', '*', '/', '+', '-', '(', ')', ',', '.', ';', ':'};
+	const char validSyms[] = {'=', '<', '>', '%', '*', '/', '+', '-', '(', ')', ',', '.', ';', ':'};
 	for (int i = 0; i < strlen(validSyms); i++)
 	{
 		if (c == validSyms[i])
@@ -317,6 +319,7 @@ int issymb(char c)
 	return 0;
 }
 
+// Determine if a string is a valid symbol
 int isValidSymbol(char* s)
 {
 	for (int i = 0; i < NUM_SYM; i++)
@@ -328,6 +331,7 @@ int isValidSymbol(char* s)
 	return 0;
 }
 
+// Print all tokens in lexeme table
 void printtokens()
 {
 	int i;
