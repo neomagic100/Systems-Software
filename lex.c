@@ -116,7 +116,6 @@ lexeme *lexanalyzer(char *input)
 // Tokenize a symbol read from input
 lexeme tokenizeSymbol(char* input)
 {
-	//TODO
 	lexeme currLex;
 	char str[3];
 	str[0] = input[input_char_count];
