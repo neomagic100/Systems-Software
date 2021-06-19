@@ -118,16 +118,116 @@ lexeme tokenizeSymbol(char* input)
 {
 	//TODO
 	lexeme currLex;
-	int chCnt = 0;
 	char str[3];
-	char ch = input[input_char_count];
-	char ch2 = input[input_char_count + 1];
-	str[0] = ch;
-	str[1] = ch2;
+	str[0] = input[input_char_count];
+	str[1] = input[input_char_count + 1];
 	str[2] = '\0';
 
-	switch (ch) {
-		//TODO
+	switch (str[0]) {
+		case '=':
+			if (str[1] != '=')
+			{
+				currLex.type = INVALID;
+				input_char_count++;
+				break;
+			}
+
+			currLex.type = eqlsym;
+			input_char_count += 2;
+			break;
+
+		case '<':
+			if (str[1] == '>')
+			{
+				currLex.type = neqsym;
+				input_char_count += 2;
+				break;
+			}
+			else if (str[1] == '=')
+			{
+				currLex.type = leqsym;
+				input_char_count += 2;
+				break;
+			}
+			
+			currLex.type = lessym;
+			input_char_count++;
+			break;
+
+		case '>':
+			if (str[1] == '=')
+			{
+				currLex.type = geqsym;
+				input_char_count += 2;
+				break;
+			}
+
+			currLex.type = gtrsym;
+			input_char_count++;
+			break;
+
+		case '%':
+			currLex.type = modsym;
+			input_char_count++;
+			break;
+
+		case '*':
+			currLex.type = multsym;
+			input_char_count++;
+			break;
+
+		case '/':
+			currLex.type = slashsym;
+			input_char_count++;
+			break;
+
+		case '+':
+			currLex.type = plussym;
+			input_char_count++;
+			break;
+
+		case '-':
+			currLex.type = minussym;
+			input_char_count++;
+			break;
+
+		case '(':
+			currLex.type = lparentsym;
+			input_char_count++;
+			break;
+
+		case ')':
+			currLex.type = rparentsym;
+			input_char_count++;
+			break;
+
+		case ',':
+			currLex.type = commasym;
+			input_char_count++;
+			break;
+
+		case '.':
+			currLex.type = periodsym;
+			input_char_count++;
+			break;
+
+		case ';':
+			currLex.type = semicolonsym;
+			input_char_count++;
+			break;
+
+		case ':':
+			if (str[1] != '=')
+			{
+				currLex.type = INVALID;
+				input_char_count++;
+				break;
+			}
+
+			currLex.type = becomessym;
+			input_char_count += 2;
+			break;
+
 		default:
 			currLex.type = INVALID;
 			input_char_count++;
@@ -455,7 +555,7 @@ void printtokens()
 			printf("%d ", list[i].type);
 	}
 	printf("\n");
-	list[lex_index++].type = -1;
+	list[lex_index].type = -1;
 }
 
 void printerror(int type)
