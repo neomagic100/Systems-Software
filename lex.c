@@ -21,7 +21,7 @@ lexeme *list;
 int lex_index;
 int input_char_count;
 
-//FIXME
+// Constants for valid reserved symbols and keywords
 const char symbols[NUM_SYM][3] = {"==", "<>", "<", "<=", ">", ">=", "%", "*", "/", "+", "-", "(", ")", ",", ".", ";", ":="};
 const char reserved[NORW][CHAR_MAX] = {"const", "var", "procedure", "call", "if", "then", "else", "while", "do",
 									"begin", "end", "read", "write", "odd"};
@@ -57,7 +57,7 @@ lexeme *lexanalyzer(char *input)
 
 		// Comment check, if ch is * and prev was /
 		if (ch == '*' && list[lex_index - 1].type == slashsym) {
-			if (readComment(input) == -1)
+			if (readComment(input) == INVALID)
 				return NULL;
 		}
 
@@ -554,7 +554,7 @@ void printtokens()
 			printf("%d ", list[i].type);
 	}
 	printf("\n");
-	list[lex_index].type = -1;
+	list[lex_index].type = INVALID;
 }
 
 void printerror(int type)
