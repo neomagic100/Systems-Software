@@ -1,10 +1,9 @@
-/*
-	This is the lex skeleton for the UCF Summer 2021 Systems Software Project
-	Implement the function lexanalyzer, add as many functions and global
-	variables as desired, but do not alter printerror or printtokens.
-	Include your name (and your partner's name) in this comment in order to
-	earn the points for compiling
-*/
+/*********************************************************************
+ *  Assignment 2: Lexical Analyzer                                   *
+ *  COP 3402 Summer 2021                                             *
+ *  Authors: Willow Maddox                                           *
+ *           Michael Bernhardt                                       *
+ *********************************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -96,7 +95,7 @@ lexeme *lexanalyzer(char *input)
 		}
 
 		// If ch is ignorable character (whitespace, tab, or newline), incrememnt input_char_count to skip it
-		else if (isspace(ch))
+		else if (iscntrl(ch) || isspace(ch))
 		{
 			input_char_count++;
 		}
@@ -109,6 +108,7 @@ lexeme *lexanalyzer(char *input)
 
 	}
 
+	// Print before returning list
 	printtokens();
 	return list;
 }
@@ -148,7 +148,7 @@ lexeme tokenizeSymbol(char* input)
 				input_char_count += 2;
 				break;
 			}
-			
+
 			currLex.type = lessym;
 			input_char_count++;
 			break;
@@ -280,7 +280,7 @@ lexeme identOrKeyword(char* input)
 		input_char_count++;
 		ch = input[input_char_count];
 	}
-	while (isalnum(ch));
+	while (isalpha(ch) || isdigit(ch));
 
 	// At this point, reached end of string with letter (letter | digit)*
 	str[chCnt] = '\0';
@@ -572,6 +572,7 @@ void printerror(int type)
 	else
 		printf("Implementation Error: Unrecognized Error Type\n");
 
-	free(list);
+	if (list != NULL)
+		free(list);
 	return;
 }
