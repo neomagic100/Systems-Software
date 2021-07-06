@@ -1,7 +1,3 @@
-/*
-	Author: Noelle Midkiff
-*/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,12 +10,27 @@ int error;
 void printtable();
 void errorend(int x);
 
+// Added functions
+int program_Parse();
+int block_Parse();
+int const_declaration_Parse();
+int var_declaration_Parse();
+int procedure_declaration_Parse();
+int statement_Parse();
+int condition_Parse();
+int rel_op_Parse();
+int expression_Parse();
+int term_Parse();
+int factor_Parse();
+int validTerminal();
+symbol createToken(int, char*, int, int, int);
+
 symbol *parse(lexeme *input)
 {
 	table = malloc(1000 * sizeof(symbol));
 	sym_index = 0;
 	error = 0;
-	
+
 	if (error)
 	{
 		free(table);
@@ -31,6 +42,47 @@ symbol *parse(lexeme *input)
 		return table;
 	}
 }
+
+/* Added Code */
+
+int program_Parse()
+{
+
+}
+
+// Use or Don't use. Just Brainstorming
+symbol createToken(int kind, char* name, int val, int level, int addr)
+{
+	symbol retSym;
+	retSym.kind = kind;
+	retSym.mark = 0;
+
+	if (kind == 1)
+	{
+		strcpy(retSym.name, name);
+		retSym.val = val;
+		retSym.level = level;
+	}
+	else if (kind == 2)
+	{
+		strcpy(retSym.name, name);
+		retSym.level = level;
+		retSym.addr = addr;
+	}
+	else if (kind == 3)
+	{
+		strcpy(retSym.name, name);
+		retSym.level = level;
+	}
+	else
+	{
+		retSym.mark = -1;
+	}
+
+	return retSym;
+}
+
+/* End Added Code */
 
 void errorend(int x)
 {
@@ -82,7 +134,7 @@ void errorend(int x)
 			printf("Implementation Error: Unrecognized Error Code\n");
 			break;
 	}
-	
+
 }
 
 void printtable()
@@ -92,5 +144,5 @@ void printtable()
 	printf("Kind | Name        | Value | Level | Address\n");
 	printf("------------------------------------------------------\n");
 	for (i = 0; i < sym_index; i++)
-		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].value, table[i].level, table[i].addr); 
+		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].value, table[i].level, table[i].addr);
 }
