@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "compiler.h"
+#define CONST_KIND 1
+#define VAR_KIND 2
+#define PROC_KIND 3
 
 symbol *table;
 int sym_index;
@@ -9,6 +12,10 @@ int error;
 
 void printtable();
 void errorend(int x);
+
+// Added Global Vars
+lexeme* lexList;
+int lex_index;
 
 // Added functions
 int program_Parse();
@@ -31,6 +38,14 @@ symbol *parse(lexeme *input)
 	sym_index = 0;
 	error = 0;
 
+	// Added Code
+	lexList = input;
+	lex_index = 0;
+
+	error = program();
+
+	// end added code
+
 	if (error)
 	{
 		free(table);
@@ -47,8 +62,86 @@ symbol *parse(lexeme *input)
 
 int program_Parse()
 {
+	block_Parse();
+	if (lexList[lex_index] == periodsym)
+	{
+		errorend(3);
+		return 3;
+	}
+
+	return 0;
 
 }
+
+int block_Parse()
+{
+	lexeme currLex = lexList[lex_index];
+
+	if (currLex.type == constsym)
+	{
+		lex_index++;
+		const_declaration_Parse();
+	}
+
+	if (currLex.type == varsym)
+	{
+		lex_index++;
+		var_declaration_Parse();
+	}
+
+	if (currLex.type == procsym)
+	{
+		lex_index++;
+		procedure_declaration_Parse();
+	}
+
+	statement();
+
+	return block_Parse();
+}
+
+int const_declaration_Parse()
+{
+	symbol sym;
+
+	do {
+		sym.kind = CONST_KIND;
+
+		if (lexList[lex_index].type != identsym)
+		{
+			errorend(4);
+			return 4;
+		}
+
+		strcpy(sym.name, lexList[lex_index++].name);
+
+		if (lexList[lex_index++].type != becomessym)
+		{
+			errorend(5);
+			return 5;
+		}
+
+		if (lexList[lex_index].type != numbersym)
+		{
+			errorend(5);
+			return 5;
+		}
+
+		sym.val = lexList[lex_index++].value;
+
+		table[sym_index++] = sym;
+	}
+	while (lexList[lex_index++].type == commasym);
+
+	if (lexList[lex_index++] != semicolonsym)
+	{
+		errorend(6);
+		return 6;
+	}
+
+	return 0;
+}
+
 
 // Use or Don't use. Just Brainstorming
 symbol createToken(int kind, char* name, int val, int level, int addr)
