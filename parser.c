@@ -16,8 +16,32 @@ void errorend(int x);
 // Added Global Vars
 lexeme* lexList;
 int lex_index;
+lexeme currentToken;
 
 // Added functions
+void getNextToken()
+{
+	currentToken = lexList[lex_index++];
+}
+
+
+
+int peekNext()
+{
+	return lexList[lex_index + 1].type;
+}
+
+int checkNextTokenValid(int sym)
+{
+	return (peekNext() == sym);
+}
+
+int expectStatement() {
+	return (peekNext() == identsym || peekNext() == callsym || peekNext() == beginsym || peekNext() == ifsym ||
+			peekNext() == whilesym || peekNext() == readsym || peekNext() == writesym); // || empty
+
+}
+
 int program_Parse();
 int block_Parse();
 int const_declaration_Parse();
@@ -31,9 +55,11 @@ int term_Parse();
 int factor_Parse();
 int validTerminal();
 symbol createToken(int, char*, int, int, int);
+symbol readAssignment(int);
 
 symbol *parse(lexeme *input)
 {
+	printf("Parse start");
 	table = malloc(1000 * sizeof(symbol));
 	sym_index = 0;
 	error = 0;
@@ -42,7 +68,7 @@ symbol *parse(lexeme *input)
 	lexList = input;
 	lex_index = 0;
 
-	error = program();
+	program_Parse();
 
 	// end added code
 
@@ -62,11 +88,15 @@ symbol *parse(lexeme *input)
 
 int program_Parse()
 {
+	// Parse block
 	block_Parse();
-	if (lexList[lex_index] == periodsym)
+
+	// Follow with period
+	if (currentToken.type != periodsym)
 	{
 		errorend(3);
-		return 3;
+		error = 3;
+		return -1;
 	}
 
 	return 0;
@@ -75,68 +105,104 @@ int program_Parse()
 
 int block_Parse()
 {
-	lexeme currLex = lexList[lex_index];
 
-	if (currLex.type == constsym)
+	if (currentToken.type == constsym)
 	{
-		lex_index++;
+		getNextToken();
 		const_declaration_Parse();
 	}
 
-	if (currLex.type == varsym)
+	if (currentToken.type == varsym)
 	{
-		lex_index++;
-		var_declaration_Parse();
+		getNextToken();
+		//var_declaration_Parse();
 	}
 
-	if (currLex.type == procsym)
+	if (currentToken.type == procsym)
 	{
-		lex_index++;
-		procedure_declaration_Parse();
+		getNextToken();
+		//procedure_declaration_Parse();
 	}
 
-	statement();
+	while (expectStatement())
+		statement_Parse();
 
-	return block_Parse();
+	return 0;
+}
+
+int statement_Parse()
+{
+	//TODO
+	return 0;
+}
+
+symbol readAssignment(int kind)
+{
+	symbol sym;
+
+	sym.kind = kind;
+
+	if (currentToken.type != identsym)
+	{
+		errorend(4);
+		error = 4;
+		sym.kind = -1;
+	}
+
+	strcpy(sym.name, currentToken.name);
+
+	getNextToken();
+
+	if (currentToken.type != becomessym)
+	{
+		errorend(5);
+		error = 5;
+		sym.kind = -1;
+	}
+
+	getNextToken();
+
+	if (currentToken.type != numbersym)
+	{
+		errorend(5);
+		error = 5;
+		sym.kind = -1;
+	}
+
+	sym.val = currentToken.value;
+
+	getNextToken();
+
+	return sym;
+
 }
 
 int const_declaration_Parse()
 {
 	symbol sym;
+	int isNextAssignment = 0;
 
 	do {
-		sym.kind = CONST_KIND;
 
-		if (lexList[lex_index].type != identsym)
-		{
-			errorend(4);
-			return 4;
-		}
+		sym = readAssignment(CONST_KIND);
 
-		strcpy(sym.name, lexList[lex_index++].name);
+		if (sym.kind == -1)
+			return -1;
 
-		if (lexList[lex_index++].type != becomessym)
-		{
-			errorend(5);
-			return 5;
-		}
-
-		if (lexList[lex_index].type != numbersym)
-		{
-			errorend(5);
-			return 5;
-		}
-
-		sym.val = lexList[lex_index++].value;
 
 		table[sym_index++] = sym;
+		if (peekNext() == commasym) {
+			lex_index += 2;
+			isNextAssignment = 1;
+		}
 	}
-	while (lexList[lex_index++].type == commasym);
+	while (isNextAssignment);
 
-	if (lexList[lex_index++] != semicolonsym)
+	if (currentToken.type != semicolonsym)
 	{
 		errorend(6);
-		return 6;
+		error = 6;
+		return -1;
 	}
 
 	return 0;
@@ -237,5 +303,5 @@ void printtable()
 	printf("Kind | Name        | Value | Level | Address\n");
 	printf("------------------------------------------------------\n");
 	for (i = 0; i < sym_index; i++)
-		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].value, table[i].level, table[i].addr);
+		printf("%4d | %11s | %5d | %5d | %5d\n", table[i].kind, table[i].name, table[i].val, table[i].level, table[i].addr);
 }
