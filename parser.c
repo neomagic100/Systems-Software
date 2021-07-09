@@ -26,16 +26,13 @@ void term();
 void factor();
 
 symbol initSymbol();
-
-void addSymbolToTable(symbol s);
-int checkSymbolTable(char *s);
-
+void enterSymbol(int, char*, int, int);
 
 void getToken();
 int currToken;
 lexeme currLex;
 int token_index;
-lexeme *tokens;
+lexeme tokens*;
 
 int currLevel;
 
@@ -52,7 +49,6 @@ symbol *parse(lexeme *input)
 	token_index = 0;
 	currLevel = 0;
 
-
 	program();
 
 	if (error)
@@ -66,8 +62,6 @@ symbol *parse(lexeme *input)
 		return table;
 	}
 }
-
-
 
 void getToken()
 {
@@ -96,7 +90,7 @@ void enterSymbol(int type, char* name, int level, int valOrAddr)
 	{
 		if (strcmp(table[i].name, name) == 0)
 		{
-			// print error 1
+			// print error
 		}
 	}
 
@@ -118,17 +112,6 @@ void enterSymbol(int type, char* name, int level, int valOrAddr)
 	table[sym_index] = s;
 	sym_index++;
 	num_symbols++;
-}
-
-int checkSymbolTable(char *s)
-{
-	for (int i = 0; i <= token_index; i++)
-	{
-		if (strcmp(s, table[i].name) == 0)
-			return i;
-	}
-
-	return -1;
 }
 
 void program()
@@ -163,37 +146,7 @@ void block()
 
 void const_declaraton()
 {
-		getToken();
 
-		if (currToken != identsym)
-		{
-			errorend(4);
-			exit(0);
-		}
-
-		// Checks that identifier name isn't already in use
-		if (checkSymbolTable(tokens[token_index].name) != -1)
-		{
-			errorend(1);
-			exit(0);
-		}
-
-		strcpy(sym.name, tokens[token_index].name);
-		getToken();
-
-		if (currToken != becomessym)
-		{
-			errorend(5);
-			exit(0);
-		}
-
-		currToken = getToken();
-
-		if (currToken != numbersym)
-		{
-			errorend(5);
-			exit(0);
-		}
 }
 
 void var_declaration()
@@ -210,23 +163,40 @@ void var_declaration()
 			error = 4;
 			return;
 		}
-		getToken();
-	}
-	while (currToken == commasym);
 
+		strcpy(name, currLex.name);
+
+		enterSymbol(VARIABLE, name, currLevel, 0);
+
+		getToken();
+
+	}
+	while (currToken != commasym);
 
 	if (currToken != semicolonsym)
 	{
 		errorend(6);
-		exit(0);
+		error = 6;
+		return;
 	}
-	
-	 getToken();
 }
 
 void proc_declaration()
 {
+	do
+	{
+		getToken();
 
+		if (currToken != identsym)
+		{
+			errorend(4);
+			error = 4;
+			return;
+		}
+
+		
+	}
+	while(currToken == procsym);
 }
 
 void statement()
@@ -319,5 +289,5 @@ void printtable()
 	printf("Kind | Name        | Value | Level | Address\n");
 	printf("------------------------------------------------------\n");
 	for (i = 0; i < sym_index; i++)
-		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].val, table[i].level, table[i].addr);
+		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].value, table[i].level, table[i].addr);
 }
