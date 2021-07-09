@@ -3,6 +3,10 @@
 #include <string.h>
 #include "compiler.h"
 #define TABLE_SIZE 1000
+#define CONSTANT 1
+#define VARIABLE 2
+#define PROCEDURE 3
+#define MAX_CHARS 12
 
 symbol *table;
 int sym_index;
@@ -22,13 +26,18 @@ void term();
 void factor();
 
 symbol initSymbol();
+
 void addSymbolToTable(symbol s);
 int checkSymbolTable(char *s);
 
-int getToken();
+
+void getToken();
 int currToken;
+lexeme currLex;
 int token_index;
 lexeme *tokens;
+
+int currLevel;
 
 void printtable();
 void errorend(int x);
@@ -40,7 +49,9 @@ symbol *parse(lexeme *input)
 	error = 0;
 	num_symbols = 0;
 	tokens = input;
-	token_index = -1;
+	token_index = 0;
+	currLevel = 0;
+
 
 	program();
 
@@ -56,9 +67,13 @@ symbol *parse(lexeme *input)
 	}
 }
 
-int getToken() // Returns token type
+
+
+void getToken()
 {
-	return tokens[++token_index].type;
+	currToken = tokens[token_index].type;
+	currLex = tokens[token_index];
+	token_index++
 }
 
 symbol initSymbol()
@@ -74,17 +89,31 @@ symbol initSymbol()
 	return s;
 }
 
-void addSymbolToTable(symbol s)
+void enterSymbol(int type, char* name, int level, int valOrAddr)
 {
 	// check for conflicting idents
 	for (int i = 0; i < num_symbols; i++)
 	{
-		if (strcmp(table[i].name, s.name) == 0)
+		if (strcmp(table[i].name, name) == 0)
 		{
 			// print error 1
 		}
 	}
 
+	symbol s;
+	strcpy(s.name, name);
+	s.kind = type;
+	s.level = level;
+
+	if (type == CONSTANT)
+	{
+		s.val = valOrAddr;
+	}
+	else if (type == VARIABLE)
+	{
+		// computer addr
+		s.addr = valOrAddr;
+	}
 
 	table[sym_index] = s;
 	sym_index++;
@@ -104,7 +133,7 @@ int checkSymbolTable(char *s)
 
 void program()
 {
-	currToken = getToken();
+	getToken();
 	block();
 
 	// Make sure period at end of program
@@ -134,12 +163,7 @@ void block()
 
 void const_declaraton()
 {
-	do
-	{
-		symbol sym = initSymbol();
-		sym.kind = 1;
-
-		currToken = getToken();
+		getToken();
 
 		if (currToken != identsym)
 		{
@@ -155,7 +179,7 @@ void const_declaraton()
 		}
 
 		strcpy(sym.name, tokens[token_index].name);
-		currToken = getToken();
+		getToken();
 
 		if (currToken != becomessym)
 		{
@@ -169,16 +193,27 @@ void const_declaraton()
 		{
 			errorend(5);
 			exit(0);
+
+}
+
+void var_declaration()
+{
+	do
+	{
+		char name[MAX_CHARS];
+
+		getToken();
+
+		if (currToken != identsym)
+		{
+			errorend(4);
+			error = 4;
+			return;
 		}
-
-		sym.val = tokens[token_index].value;
-
-		// add to symbol table
-		addSymbolToTable(sym);
-
-		currToken = getToken();
+		getToken();
 	}
 	while (currToken == commasym);
+
 
 	if (currToken != semicolonsym)
 	{
@@ -186,12 +221,14 @@ void const_declaraton()
 		exit(0);
 	}
 	
-	currToken = getToken();
+	 getToken();
 }
 
 void var_declaration()
 {
-
+		error = 6;
+		return;
+	
 }
 
 void proc_declaration()
