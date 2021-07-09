@@ -159,7 +159,9 @@ void var_declaration(int level)
 
 		if (currToken != identsym)
 		{
-			//printerror
+			errorend(4);
+			error = 4;
+			return;
 		}
 
 		strcpy(name, currLex.name);
@@ -173,7 +175,9 @@ void var_declaration(int level)
 
 	if (currToken != semicolonsym)
 	{
-		//TODO printerror
+		errorend(6);
+		error = 6;
+		return;
 	}
 }
 
