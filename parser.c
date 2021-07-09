@@ -2,75 +2,46 @@
 #include <stdio.h>
 #include <string.h>
 #include "compiler.h"
-#define CONST_KIND 1
-#define VAR_KIND 2
-#define PROC_KIND 3
+#define TABLE_SIZE 1000
 
 symbol *table;
 int sym_index;
+int num_symbols; // may be redundant
 int error;
+
+void program();
+void block();
+void statement();
+void const_declaraton();
+void var_declaration();
+void proc_declaration();
+void condition();
+void rel_op();
+void expression();
+void term();
+void factor();
+
+symbol initSymbol();
+void addSymbolToTable(symbol s);
+
+int getToken();
+int currToken;
+int token_index;
+lexeme tokens*;
 
 void printtable();
 void errorend(int x);
 
-// Added Global Vars
-lexeme* lexList;
-int lex_index;
-lexeme currentToken;
-
-// Added functions
-void getNextToken()
-{
-	currentToken = lexList[lex_index++];
-}
-
-
-
-int peekNext()
-{
-	return lexList[lex_index + 1].type;
-}
-
-int checkNextTokenValid(int sym)
-{
-	return (peekNext() == sym);
-}
-
-int expectStatement() {
-	return (peekNext() == identsym || peekNext() == callsym || peekNext() == beginsym || peekNext() == ifsym ||
-			peekNext() == whilesym || peekNext() == readsym || peekNext() == writesym); // || empty
-
-}
-
-int program_Parse();
-int block_Parse();
-int const_declaration_Parse();
-int var_declaration_Parse();
-int procedure_declaration_Parse();
-int statement_Parse();
-int condition_Parse();
-int rel_op_Parse();
-int expression_Parse();
-int term_Parse();
-int factor_Parse();
-int validTerminal();
-symbol createToken(int, char*, int, int, int);
-symbol readAssignment(int);
-
 symbol *parse(lexeme *input)
 {
-	printf("Parse start");
-	table = malloc(1000 * sizeof(symbol));
+	table = malloc(TABLE_SIZE * sizeof(symbol));
 	sym_index = 0;
 	error = 0;
+	num_symbols = 0;
+	tokens = input;
+	token_index = 0;
 
-	// Added Code
-	lexList = input;
-	lex_index = 0;
-
-	program_Parse();
-
-	// end added code
+	program();
 
 	if (error)
 	{
@@ -84,164 +55,154 @@ symbol *parse(lexeme *input)
 	}
 }
 
-/* Added Code */
-
-int program_Parse()
+int getToken()
 {
-	// Parse block
-	block_Parse();
-
-	// Follow with period
-	if (currentToken.type != periodsym)
-	{
-		errorend(3);
-		error = 3;
-		return -1;
-	}
-
-	return 0;
-
+	return tokens[token_index++].type;
 }
 
-int block_Parse()
+symbol initSymbol()
 {
+	symbol s;
+	s.val = 0;
+	s.level = 0;
+	s.mark = 0;
+	s.addr = 0;
+	s.kind = 0;
+	s.name[0] = '\0';
 
-	if (currentToken.type == constsym)
-	{
-		getNextToken();
-		const_declaration_Parse();
-	}
-
-	if (currentToken.type == varsym)
-	{
-		getNextToken();
-		//var_declaration_Parse();
-	}
-
-	if (currentToken.type == procsym)
-	{
-		getNextToken();
-		//procedure_declaration_Parse();
-	}
-
-	while (expectStatement())
-		statement_Parse();
-
-	return 0;
+	return s;
 }
 
-int statement_Parse()
+void addSymbolToTable(symbol s)
 {
-	//TODO
-	return 0;
-}
-
-symbol readAssignment(int kind)
-{
-	symbol sym;
-
-	sym.kind = kind;
-
-	if (currentToken.type != identsym)
+	// check for conflicting idents
+	for (int i = 0; i < num_symbols; i++)
 	{
-		errorend(4);
-		error = 4;
-		sym.kind = -1;
-	}
-
-	strcpy(sym.name, currentToken.name);
-
-	getNextToken();
-
-	if (currentToken.type != becomessym)
-	{
-		errorend(5);
-		error = 5;
-		sym.kind = -1;
-	}
-
-	getNextToken();
-
-	if (currentToken.type != numbersym)
-	{
-		errorend(5);
-		error = 5;
-		sym.kind = -1;
-	}
-
-	sym.val = currentToken.value;
-
-	getNextToken();
-
-	return sym;
-
-}
-
-int const_declaration_Parse()
-{
-	symbol sym;
-	int isNextAssignment = 0;
-
-	do {
-
-		sym = readAssignment(CONST_KIND);
-
-		if (sym.kind == -1)
-			return -1;
-
-
-		table[sym_index++] = sym;
-		if (peekNext() == commasym) {
-			lex_index += 2;
-			isNextAssignment = 1;
+		if (strcmp(table[i].name, s.name) == 0)
+		{
+			// print error
 		}
 	}
-	while (isNextAssignment);
 
-	if (currentToken.type != semicolonsym)
-	{
-		errorend(6);
-		error = 6;
-		return -1;
-	}
 
-	return 0;
+	table[sym_index] = s;
+	sym_index++;
+	num_symbols++;
 }
 
-
-// Use or Don't use. Just Brainstorming
-symbol createToken(int kind, char* name, int val, int level, int addr)
+void program()
 {
-	symbol retSym;
-	retSym.kind = kind;
-	retSym.mark = 0;
+	currToken = getToken();
+	block();
 
-	if (kind == 1)
+	// Make sure period at end of program
+	if (currToken != periodsym)
 	{
-		strcpy(retSym.name, name);
-		retSym.val = val;
-		retSym.level = level;
+		errorend(3);
 	}
-	else if (kind == 2)
-	{
-		strcpy(retSym.name, name);
-		retSym.level = level;
-		retSym.addr = addr;
-	}
-	else if (kind == 3)
-	{
-		strcpy(retSym.name, name);
-		retSym.level = level;
-	}
-	else
-	{
-		retSym.mark = -1;
-	}
-
-	return retSym;
 }
 
-/* End Added Code */
+void block()
+{
+	if (currToken == constsym)
+	{
+		const_declaraton();
+	}
+	if (currToken == varsym)
+	{
+
+	}
+	if (currToken == procsym)
+	{
+
+	}
+
+	statement();
+}
+
+void const_declaraton()
+{
+	do
+	{
+		symbol sym = initSymbol();
+		sym.kind = 1;
+
+		getToken();
+		if (currToken != identsym)
+		{
+
+		}
+
+		strcpy(sym.name, tokens[token_index].name)
+
+		getToken();
+		if (currToken != becomessym)
+		{
+
+		}
+		getToken();
+		if (currToken != numbersym)
+		{
+
+		}
+
+		sym.val = tokens[token_index].value;
+
+		// add to symbol table
+		addSymbolToTable(sym);
+
+		getToken();
+
+
+	}
+	while (currToken != commasym)
+
+	if (currToken != semicolonsym)
+	{
+
+	}
+	getToken();
+}
+
+void var_declaration()
+{
+
+}
+
+void proc_declaration()
+{
+
+}
+
+void statement()
+{
+
+}
+
+void condition()
+{
+
+}
+
+void rel_op()
+{
+
+}
+
+void expression()
+{
+
+}
+
+void term()
+{
+
+}
+
+void factor()
+{
+
+}
 
 void errorend(int x)
 {
@@ -303,5 +264,5 @@ void printtable()
 	printf("Kind | Name        | Value | Level | Address\n");
 	printf("------------------------------------------------------\n");
 	for (i = 0; i < sym_index; i++)
-		printf("%4d | %11s | %5d | %5d | %5d\n", table[i].kind, table[i].name, table[i].val, table[i].level, table[i].addr);
+		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].value, table[i].level, table[i].addr);
 }
