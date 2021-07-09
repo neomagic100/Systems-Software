@@ -20,7 +20,7 @@ void const_declaraton();
 void var_declaration();
 void proc_declaration();
 void condition();
-void rel_op();
+int rel_op();
 void expression();
 void term();
 void factor();
@@ -208,7 +208,7 @@ void const_declaraton()
 		errorend(6);
 		exit(0);
 	}
-	
+
 	getToken();
 }
 
@@ -257,24 +257,172 @@ void proc_declaration()
 			return;
 		}
 
-		
+		enterSymbol(PROCEDURE, currLex.name, currLevel, 0);
+
+		getToken();
+
+		if (currToken != semicolonsym)
+		{
+			errorend(6);
+			error = 6;
+			return;
+		}
+
+		getToken();
+
+		currLevel++;
+		block();
+		currLevel--;
+
+		if (currToken != semicolonsym)
+		{
+			errorend(6);
+			error = 6;
+			return;
+		}
+
+		getToken();
+
 	}
 	while(currToken == procsym);
 }
 
 void statement()
 {
+	if (currToken == identsym)
+	{
+		getToken();
+		if (currToken != becomessym)
+		{
+			errorend(2)
+			error = 2;
+			return;
+		}
 
+		getToken();
+
+		expression();
+	}
+
+	else if (currToken == callsym)
+	{
+		getToken();
+		if (currToken != identsym)
+		{
+			errorend(14);
+			error = 14;
+			return;
+		}
+		getToken();
+	}
+
+	else if (currToken == beginsym)
+	{
+		getToken();
+		statement();
+
+		while (currToken == semicolonsym)
+		{
+			getToken();
+			statement();
+		}
+
+		if (currToken != endsym)
+		{
+			errorend(10);
+			error = 10;
+			return;
+		}
+
+		getToken();
+	}
+
+	else if (currToken == ifsym)
+	{
+		getToken();
+		condition();
+		if (currToken != thensym)
+		{
+			errorend(9);
+			error = 9;
+			return;
+		}
+		getToken();
+		statement();
+
+		if (currToken == elsesym)
+		{
+			getToken();
+			statement();
+		}
+	}
+
+	else if (currToken == whilesym)
+	{
+		getToken();
+		condition();
+		if (currToken != dosym)
+		{
+			errorend(8);
+			error = 8;
+			return;
+		}
+		getToken();
+		statement();
+	}
+
+	else if (currToken == readsym)
+	{
+		getToken();
+		if (currToken != identsym)
+		{
+			errorend(14);
+			error = 14;
+			return;
+		}
+		getToken();
+		statement();
+	}
+
+	else if (currToken == writesym)
+	{
+		getToken();
+		expression();
+		getToken();
+		statement();
+	}
+
+	else // NULL case, just return to previous call of statement
+	{
+		return;
+	}
 }
 
 void condition()
 {
-
+	if (currToken == oddsym)
+	{
+		getToken();
+		expression();
+	}
+	else
+	{
+		expression();
+		if (!rel_op())
+		{
+			errorend(12);
+			error = 12;
+			return;
+		}
+		getToken();
+		expression();
+	}
 }
 
-void rel_op()
+int rel_op()
 {
-
+	return (currToken == lessym || currToken == leqsym || currToken == gtrsym ||
+		currToken == geqsym || currToken == eqlsym || currToken == neqsym);
 }
 
 void expression()
