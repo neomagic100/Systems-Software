@@ -193,7 +193,7 @@ void const_declaraton()
 		{
 			errorend(5);
 			exit(0);
-
+		}
 }
 
 void var_declaration()
@@ -222,13 +222,6 @@ void var_declaration()
 	}
 	
 	 getToken();
-}
-
-void var_declaration()
-{
-		error = 6;
-		return;
-	
 }
 
 void proc_declaration()
