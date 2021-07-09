@@ -294,7 +294,7 @@ void statement()
 		getToken();
 		if (currToken != becomessym)
 		{
-			errorend(2)
+			errorend(2);
 			error = 2;
 			return;
 		}
