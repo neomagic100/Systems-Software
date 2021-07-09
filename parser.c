@@ -134,6 +134,7 @@ void program()
 	if (currToken != periodsym)
 	{
 		errorend(3);
+		exit(0);
 	}
 }
 
@@ -223,8 +224,7 @@ void var_declaration()
 		if (currToken != identsym)
 		{
 			errorend(4);
-			error = 4;
-			return;
+			exit(0);
 		}
 
 		strcpy(name, currLex.name);
@@ -239,8 +239,7 @@ void var_declaration()
 	if (currToken != semicolonsym)
 	{
 		errorend(6);
-		error = 6;
-		return;
+		exit(0);
 	}
 }
 
@@ -253,8 +252,7 @@ void proc_declaration()
 		if (currToken != identsym)
 		{
 			errorend(4);
-			error = 4;
-			return;
+			exit(0);
 		}
 
 		enterSymbol(PROCEDURE, currLex.name, currLevel, 0);
@@ -264,8 +262,7 @@ void proc_declaration()
 		if (currToken != semicolonsym)
 		{
 			errorend(6);
-			error = 6;
-			return;
+			exit(0);
 		}
 
 		getToken();
@@ -277,8 +274,7 @@ void proc_declaration()
 		if (currToken != semicolonsym)
 		{
 			errorend(6);
-			error = 6;
-			return;
+			exit(0);
 		}
 
 		getToken();
@@ -295,8 +291,7 @@ void statement()
 		if (currToken != becomessym)
 		{
 			errorend(2);
-			error = 2;
-			return;
+			exit(0);
 		}
 
 		getToken();
@@ -310,8 +305,7 @@ void statement()
 		if (currToken != identsym)
 		{
 			errorend(14);
-			error = 14;
-			return;
+			exit(0);
 		}
 		getToken();
 	}
@@ -330,8 +324,7 @@ void statement()
 		if (currToken != endsym)
 		{
 			errorend(10);
-			error = 10;
-			return;
+			exit(0);
 		}
 
 		getToken();
@@ -344,8 +337,7 @@ void statement()
 		if (currToken != thensym)
 		{
 			errorend(9);
-			error = 9;
-			return;
+			exit(0);
 		}
 		getToken();
 		statement();
@@ -364,8 +356,7 @@ void statement()
 		if (currToken != dosym)
 		{
 			errorend(8);
-			error = 8;
-			return;
+			exit(0);
 		}
 		getToken();
 		statement();
@@ -377,8 +368,7 @@ void statement()
 		if (currToken != identsym)
 		{
 			errorend(14);
-			error = 14;
-			return;
+			exit(0);
 		}
 		getToken();
 		statement();
@@ -411,8 +401,7 @@ void condition()
 		if (!rel_op())
 		{
 			errorend(12);
-			error = 12;
-			return;
+			exit(0);
 		}
 		getToken();
 		expression();
