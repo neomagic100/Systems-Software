@@ -14,11 +14,11 @@ int num_symbols; // may be redundant
 int error;
 
 void program();
-void block(int);
+void block();
 void statement();
-void const_declaraton(int);
-void var_declaration(int);
-void proc_declaration(int);
+void const_declaraton();
+void var_declaration();
+void proc_declaration();
 void condition();
 void rel_op();
 void expression();
@@ -126,7 +126,7 @@ void program()
 	}
 }
 
-void block(int level)
+void block()
 {
 	if (currToken == constsym)
 	{
@@ -134,22 +134,22 @@ void block(int level)
 	}
 	if (currToken == varsym)
 	{
-
+		var_declaration();
 	}
 	if (currToken == procsym)
 	{
-
+		proc_declaration();
 	}
 
 	statement();
 }
 
-void const_declaraton(int level)
+void const_declaraton()
 {
-	
+
 }
 
-void var_declaration(int level)
+void var_declaration()
 {
 	do
 	{
@@ -181,7 +181,7 @@ void var_declaration(int level)
 	}
 }
 
-void proc_declaration(int level)
+void proc_declaration()
 {
 
 }
