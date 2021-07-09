@@ -241,6 +241,8 @@ void var_declaration()
 		errorend(6);
 		exit(0);
 	}
+
+	getToken();
 }
 
 void proc_declaration()
@@ -312,6 +314,7 @@ void statement()
 
 	else if (currToken == beginsym)
 	{
+		printf("begin\n");
 		getToken();
 		statement();
 
@@ -323,6 +326,7 @@ void statement()
 
 		if (currToken != endsym)
 		{
+			printf("no end\n");
 			errorend(10);
 			exit(0);
 		}
