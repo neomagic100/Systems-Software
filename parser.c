@@ -23,11 +23,12 @@ void factor();
 
 symbol initSymbol();
 void addSymbolToTable(symbol s);
+int checkSymbolTable(char *s);
 
 int getToken();
 int currToken;
 int token_index;
-lexeme tokens*;
+lexeme *tokens;
 
 void printtable();
 void errorend(int x);
@@ -39,7 +40,7 @@ symbol *parse(lexeme *input)
 	error = 0;
 	num_symbols = 0;
 	tokens = input;
-	token_index = 0;
+	token_index = -1;
 
 	program();
 
@@ -55,9 +56,9 @@ symbol *parse(lexeme *input)
 	}
 }
 
-int getToken()
+int getToken() // Returns token type
 {
-	return tokens[token_index++].type;
+	return tokens[++token_index].type;
 }
 
 symbol initSymbol()
@@ -80,7 +81,7 @@ void addSymbolToTable(symbol s)
 	{
 		if (strcmp(table[i].name, s.name) == 0)
 		{
-			// print error
+			// print error 1
 		}
 	}
 
@@ -88,6 +89,17 @@ void addSymbolToTable(symbol s)
 	table[sym_index] = s;
 	sym_index++;
 	num_symbols++;
+}
+
+int checkSymbolTable(char *s)
+{
+	for (int i = 0; i <= token_index; i++)
+	{
+		if (strcmp(s, table[i].name) == 0)
+			return i;
+	}
+
+	return -1;
 }
 
 void program()
@@ -110,11 +122,11 @@ void block()
 	}
 	if (currToken == varsym)
 	{
-
+		var_declaration();
 	}
 	if (currToken == procsym)
 	{
-
+		proc_declaration();
 	}
 
 	statement();
@@ -127,23 +139,36 @@ void const_declaraton()
 		symbol sym = initSymbol();
 		sym.kind = 1;
 
-		getToken();
+		currToken = getToken();
+
 		if (currToken != identsym)
 		{
-
+			errorend(4);
+			exit(0);
 		}
 
-		strcpy(sym.name, tokens[token_index].name)
+		// Checks that identifier name isn't already in use
+		if (checkSymbolTable(tokens[token_index].name) != -1)
+		{
+			errorend(1);
+			exit(0);
+		}
 
-		getToken();
+		strcpy(sym.name, tokens[token_index].name);
+		currToken = getToken();
+
 		if (currToken != becomessym)
 		{
-
+			errorend(5);
+			exit(0);
 		}
-		getToken();
+
+		currToken = getToken();
+
 		if (currToken != numbersym)
 		{
-
+			errorend(5);
+			exit(0);
 		}
 
 		sym.val = tokens[token_index].value;
@@ -151,17 +176,17 @@ void const_declaraton()
 		// add to symbol table
 		addSymbolToTable(sym);
 
-		getToken();
-
-
+		currToken = getToken();
 	}
-	while (currToken != commasym)
+	while (currToken == commasym);
 
 	if (currToken != semicolonsym)
 	{
-
+		errorend(6);
+		exit(0);
 	}
-	getToken();
+	
+	currToken = getToken();
 }
 
 void var_declaration()
@@ -264,5 +289,5 @@ void printtable()
 	printf("Kind | Name        | Value | Level | Address\n");
 	printf("------------------------------------------------------\n");
 	for (i = 0; i < sym_index; i++)
-		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].value, table[i].level, table[i].addr);
+		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].val, table[i].level, table[i].addr);
 }
