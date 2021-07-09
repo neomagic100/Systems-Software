@@ -27,12 +27,13 @@ void factor();
 
 symbol initSymbol();
 void enterSymbol(int, char*, int, int);
+int checkSymbolTable(char *s);
 
 void getToken();
 int currToken;
 lexeme currLex;
 int token_index;
-lexeme tokens*;
+lexeme *tokens;
 
 int currLevel;
 
@@ -46,7 +47,7 @@ symbol *parse(lexeme *input)
 	error = 0;
 	num_symbols = 0;
 	tokens = input;
-	token_index = 0;
+	token_index = -1;
 	currLevel = 0;
 
 	program();
@@ -65,9 +66,8 @@ symbol *parse(lexeme *input)
 
 void getToken()
 {
-	currToken = tokens[token_index].type;
+	currToken = tokens[++token_index].type;
 	currLex = tokens[token_index];
-	token_index++
 }
 
 symbol initSymbol()
@@ -114,6 +114,17 @@ void enterSymbol(int type, char* name, int level, int valOrAddr)
 	num_symbols++;
 }
 
+int checkSymbolTable(char *s)
+{
+	for (int i = 0; i <= token_index; i++)
+	{
+		if (strcmp(s, table[i].name) == 0)
+			return i;
+	}
+
+	return -1;
+}
+
 void program()
 {
 	getToken();
@@ -146,7 +157,59 @@ void block()
 
 void const_declaraton()
 {
+	do
+	{
+		symbol sym = initSymbol();
+		sym.kind = 1;
 
+		getToken();
+
+		if (currToken != identsym)
+		{
+			errorend(4);
+			exit(0);
+		}
+
+		// Checks that identifier name isn't already in use
+		if (checkSymbolTable(currLex.name) != -1)
+		{
+			errorend(1);
+			exit(0);
+		}
+
+		strcpy(sym.name, currLex.name);
+		getToken();
+
+		if (currToken != becomessym)
+		{
+			errorend(5);
+			exit(0);
+		}
+
+		getToken();
+
+		if (currToken != numbersym)
+		{
+			errorend(5);
+			exit(0);
+		}
+
+		sym.val = currLex.value;
+
+		// add to symbol table
+		enterSymbol(CONSTANT, sym.name, currLevel, 0);
+
+		getToken();
+	}
+	while (currToken == commasym);
+
+	if (currToken != semicolonsym)
+	{
+		errorend(6);
+		exit(0);
+	}
+	
+	getToken();
 }
 
 void var_declaration()
@@ -171,7 +234,7 @@ void var_declaration()
 		getToken();
 
 	}
-	while (currToken != commasym);
+	while (currToken == commasym);
 
 	if (currToken != semicolonsym)
 	{
@@ -289,5 +352,5 @@ void printtable()
 	printf("Kind | Name        | Value | Level | Address\n");
 	printf("------------------------------------------------------\n");
 	for (i = 0; i < sym_index; i++)
-		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].value, table[i].level, table[i].addr);
+		printf("%4d | %11s | %5d | %5d\n", table[i].kind, table[i].name, table[i].val, table[i].level, table[i].addr);
 }
