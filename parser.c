@@ -7,6 +7,7 @@
 #define VARIABLE 2
 #define PROCEDURE 3
 #define MAX_CHARS 12
+#define BASE_ADDR 3
 
 symbol *table;
 int sym_index;
@@ -24,6 +25,7 @@ int rel_op();
 void expression();
 void term();
 void factor();
+int isTermOp();
 
 symbol initSymbol();
 void enterSymbol(int, char*, int, int);
@@ -36,6 +38,11 @@ int token_index;
 lexeme *tokens;
 
 int currLevel;
+int currAddress;
+int prevAddress;
+
+void upLevel();
+void downLevel();
 
 void printtable();
 void errorend(int x);
@@ -49,6 +56,7 @@ symbol *parse(lexeme *input)
 	tokens = input;
 	token_index = -1;
 	currLevel = 0;
+	currAddress = prevAddress = BASE_ADDR;
 
 	program();
 
@@ -95,18 +103,27 @@ void enterSymbol(int type, char* name, int level, int valOrAddr)
 	}
 
 	symbol s;
+	s.mark = 0;
 	strcpy(s.name, name);
 	s.kind = type;
 	s.level = level;
+
 
 	if (type == CONSTANT)
 	{
 		s.val = valOrAddr;
 	}
-	else if (type == VARIABLE)
+	else
 	{
-		// computer addr
-		s.addr = valOrAddr;
+		s.val = 0;
+	}
+	if (type == VARIABLE)
+	{
+		s.addr = currAddress++;
+	}
+	else
+	{
+		s.addr = 0;
 	}
 
 	table[sym_index] = s;
@@ -127,6 +144,7 @@ int checkSymbolTable(char *s)
 
 void program()
 {
+	enterSymbol(PROCEDURE, "main", 0, 0);
 	getToken();
 	block();
 
@@ -198,7 +216,7 @@ void const_declaraton()
 		sym.val = currLex.value;
 
 		// add to symbol table
-		enterSymbol(CONSTANT, sym.name, currLevel, 0);
+		enterSymbol(CONSTANT, sym.name, currLevel, sym.val);
 
 		getToken();
 	}
@@ -269,9 +287,9 @@ void proc_declaration()
 
 		getToken();
 
-		currLevel++;
+		upLevel();
 		block();
-		currLevel--;
+		downLevel();
 
 		if (currToken != semicolonsym)
 		{
@@ -314,7 +332,6 @@ void statement()
 
 	else if (currToken == beginsym)
 	{
-		printf("begin\n");
 		getToken();
 		statement();
 
@@ -326,7 +343,6 @@ void statement()
 
 		if (currToken != endsym)
 		{
-			printf("no end\n");
 			errorend(10);
 			exit(0);
 		}
@@ -386,7 +402,7 @@ void statement()
 		statement();
 	}
 
-	else // NULL case, just return to previous call of statement
+	else 
 	{
 		return;
 	}
@@ -420,17 +436,76 @@ int rel_op()
 
 void expression()
 {
+	if (currToken == plussym || currToken == minussym)
+	{
+		getToken();
+	}
 
+	term();
+
+	while (currToken == plussym || currToken == minussym)
+	{
+		getToken();
+		term();
+	}
 }
 
 void term()
 {
+	factor();
+	while (isTermOp())
+	{
+		getToken();
+		factor();
+	}
 
 }
 
 void factor()
 {
+	if (currToken == identsym)
+	{
+		getToken();
+	}
+	else if (currToken == numbersym)
+	{
+		getToken();
+	}
+	else if (currToken == lparentsym)
+	{
+		getToken();
+		expression();
+		if (currToken != rparentsym)
+		{
+			errorend(13);
+			exit(0);
+		}
+		getToken();
+	}
+	else
+	{
+		errorend(2);
+		exit(0); // ident or number expected
+	}
 
+}
+
+int isTermOp()
+{
+	return (currToken == multsym || currToken == slashsym || currToken == modsym);
+}
+
+void upLevel()
+{
+	currLevel++;
+	prevAddress = currAddress;
+	currAddress = BASE_ADDR;
+}
+
+void downLevel()
+{
+	currLevel++;
+	currAddress = prevAddress;
 }
 
 void errorend(int x)
