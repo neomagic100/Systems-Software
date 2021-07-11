@@ -470,6 +470,12 @@ void factor()
 	else if (currToken == numbersym)
 	{
 		getToken();
+
+		if (currToken == lparentsym)
+		{
+			errorend(2);
+			exit(0);
+		}
 	}
 	else if (currToken == lparentsym)
 	{
