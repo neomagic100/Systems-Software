@@ -25,6 +25,7 @@ void expression();
 void term();
 void factor();
 int isTermOp();
+int checkValidTokenAfterStatement();
 int checkExpressionFollows();
 void checkVarDeclared();
 void checkConditionFollows();
@@ -324,6 +325,12 @@ void statement()
 		getToken();
 		checkExpressionFollows();
 		expression();
+		// ERROR If next token is not ; end ident call begin if while read write 
+		if(!checkValidTokenAfterStatement())
+		{
+			errorend(2);
+			exit(0);
+		}
 	}
 
 	else if (currToken == callsym)
@@ -487,12 +494,6 @@ void factor()
 	else if (currToken == numbersym)
 	{
 		getToken();
-
-		if (currToken == lparentsym)
-		{
-			errorend(2);
-			exit(0);
-		}
 	}
 	else if (currToken == lparentsym)
 	{
@@ -512,6 +513,13 @@ void factor()
 		exit(0); // ident or number expected
 	}
 
+}
+
+// ERROR If next token is not ; end ident call begin if while read write 
+int checkValidTokenAfterStatement()
+{
+	return (currToken == semicolonsym || currToken == beginsym || currToken == endsym || currToken == identsym || currToken == callsym
+		|| currToken == ifsym || currToken == whilesym || currToken == readsym || currToken == writesym);
 }
 
 int checkFactorFollows()
