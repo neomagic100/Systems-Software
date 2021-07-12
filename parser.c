@@ -99,7 +99,7 @@ void enterSymbol(int type, char* name, int level, int valOrAddr)
 	// check for conflicting idents
 	for (int i = 0; i < sym_index; i++)
 	{
-		if (strcmp(table[i].name, name) == 0)
+		if (strcmp(table[i].name, name) == 0 && table[i].level == level)
 		{
 			errorend(1);
 			exit(0);
@@ -194,11 +194,11 @@ void const_declaraton()
 		}
 
 		// Checks that identifier name isn't already in use
-		if (checkSymbolTable(currLex.name) != -1)
+		/*if (checkSymbolTable(currLex.name) != -1)
 		{
 			errorend(1);
 			exit(0);
-		}
+		}*/
 
 		strcpy(sym.name, currLex.name);
 		getToken();
