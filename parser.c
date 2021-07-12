@@ -12,6 +12,13 @@
 symbol *table;
 int sym_index;
 int error;
+int currToken;
+lexeme currLex;
+int token_index;
+lexeme *tokens;
+int currLevel;
+int currAddress;
+int prevAddress;
 
 void program();
 void block();
@@ -31,27 +38,16 @@ void checkVarDeclared();
 void checkConditionFollows();
 int checkFactorFollows();
 void errorCheck();
-
 symbol initSymbol();
-void enterSymbol(int, char*, int, int);
-int checkSymbolTable(char *s);
-
-void getToken();
-int currToken;
-lexeme currLex;
-int token_index;
-lexeme *tokens;
-
-int currLevel;
-int currAddress;
-int prevAddress;
-
 void upLevel();
 void downLevel();
-
+void enterSymbol(int, char*, int, int);
+int checkSymbolTable(char *s);
+void getToken();
 void printtable();
 void errorend(int x);
 
+// Parse a lexeme list
 symbol *parse(lexeme *input)
 {
 	table = malloc(TABLE_SIZE * sizeof(symbol));
@@ -62,6 +58,7 @@ symbol *parse(lexeme *input)
 	currLevel = 0;
 	currAddress = prevAddress = BASE_ADDR;
 
+	// Start parsing with program call
 	program();
 
 	if (error)
@@ -76,12 +73,14 @@ symbol *parse(lexeme *input)
 	}
 }
 
+// Update the global varables to get the next token
 void getToken()
 {
 	currToken = tokens[++token_index].type;
 	currLex = tokens[token_index];
 }
 
+// Initialize and return a symbol
 symbol initSymbol()
 {
 	symbol s;
@@ -95,9 +94,10 @@ symbol initSymbol()
 	return s;
 }
 
-void enterSymbol(int type, char* name, int level, int valOrAddr)
+// Enter a symbol into the symbol table
+void enterSymbol(int type, char* name, int level, int val)
 {
-	// check for conflicting idents
+	// check for conflicting identifiers on same level
 	for (int i = 0; i < sym_index; i++)
 	{
 		if (strcmp(table[i].name, name) == 0 && table[i].level == level)
@@ -116,7 +116,7 @@ void enterSymbol(int type, char* name, int level, int valOrAddr)
 
 	if (type == CONSTANT)
 	{
-		s.val = valOrAddr;
+		s.val = val;
 	}
 	else
 	{
@@ -135,6 +135,7 @@ void enterSymbol(int type, char* name, int level, int valOrAddr)
 	sym_index++;
 }
 
+// Check if an identifier is already declared
 int checkSymbolTable(char *s)
 {
 	for (int i = 0; i <= token_index; i++)
@@ -146,11 +147,14 @@ int checkSymbolTable(char *s)
 	return -1;
 }
 
+// Syntactic class - Top level of top down recursion parsing
 void program()
 {
+	// Enter a symbol representing the main function
 	enterSymbol(PROCEDURE, "main", 0, 0);
 	getToken();
-	block();
+
+	block(); // Call for block
 
 	// Make sure period at end of program
 	if (currToken != periodsym)
@@ -160,25 +164,20 @@ void program()
 	}
 }
 
+// Syntactic class for a block
 void block()
 {
-	if (currToken == constsym)
-	{
-		const_declaraton();
-	}
-	if (currToken == varsym)
-	{
-		var_declaration();
-	}
-	if (currToken == procsym)
-	{
-		proc_declaration();
-	}
+	if (currToken == constsym) const_declaraton();
+	
+	if (currToken == varsym) var_declaration();
+	
+	if (currToken == procsym) proc_declaration();
 
 	statement();
 	errorCheck();
 }
 
+// Syntactic class for constant declaration
 void const_declaraton()
 {
 	do
@@ -193,13 +192,6 @@ void const_declaraton()
 			errorend(4);
 			exit(0);
 		}
-
-		// Checks that identifier name isn't already in use
-		/*if (checkSymbolTable(currLex.name) != -1)
-		{
-			errorend(1);
-			exit(0);
-		}*/
 
 		strcpy(sym.name, currLex.name);
 		getToken();
@@ -236,6 +228,7 @@ void const_declaraton()
 	getToken();
 }
 
+// Syntactic class for variable declaration
 void var_declaration()
 {
 	do
@@ -268,6 +261,7 @@ void var_declaration()
 	getToken();
 }
 
+// Syntactic class for procedure declaration
 void proc_declaration()
 {
 	do
@@ -292,6 +286,7 @@ void proc_declaration()
 
 		getToken();
 
+		// Go to next level before calling block for procedure, then go down a level
 		upLevel();
 		block();
 		downLevel();
@@ -308,11 +303,12 @@ void proc_declaration()
 	while(currToken == procsym);
 }
 
+// Syntactic class for a statement
 void statement()
 {
 	errorCheck();
 
-	if (currToken == identsym)
+	if (currToken == identsym)	// ident
 	{
 		checkVarDeclared();
 		getToken();
@@ -333,7 +329,7 @@ void statement()
 		}
 	}
 
-	else if (currToken == callsym)
+	else if (currToken == callsym) // call
 	{
 		getToken();
 		if (currToken != identsym)
@@ -345,7 +341,7 @@ void statement()
 		getToken();
 	}
 
-	else if (currToken == beginsym)
+	else if (currToken == beginsym) // begin
 	{
 		getToken();
 		statement();
@@ -365,7 +361,7 @@ void statement()
 		getToken();
 	}
 
-	else if (currToken == ifsym)
+	else if (currToken == ifsym) // if
 	{
 		getToken();
 		checkConditionFollows();
@@ -385,7 +381,7 @@ void statement()
 		}
 	}
 
-	else if (currToken == whilesym)
+	else if (currToken == whilesym) // while
 	{
 		getToken();
 		checkConditionFollows();
@@ -399,7 +395,7 @@ void statement()
 		statement();
 	}
 
-	else if (currToken == readsym)
+	else if (currToken == readsym) // read
 	{
 		getToken();
 		if (currToken != identsym)
@@ -412,7 +408,7 @@ void statement()
 		statement();
 	}
 
-	else if (currToken == writesym)
+	else if (currToken == writesym) // write
 	{
 		getToken();
 		checkExpressionFollows();
@@ -421,12 +417,13 @@ void statement()
 		statement();
 	}
 
-	else 
+	else // catch for null statement
 	{
 		return;
 	}
 }
 
+// Syntactic class for condition
 void condition()
 {
 	if (currToken == oddsym)
@@ -450,12 +447,14 @@ void condition()
 	}
 }
 
+// Check if the current token is a valid relational operator
 int rel_op()
 {
 	return (currToken == lessym || currToken == leqsym || currToken == gtrsym ||
 		currToken == geqsym || currToken == eqlsym || currToken == neqsym);
 }
 
+// Syntactic class for expression
 void expression()
 {
 	if (currToken == plussym || currToken == minussym)
@@ -472,6 +471,7 @@ void expression()
 	}
 }
 
+// Syntactic class for term
 void term()
 {
 	checkFactorFollows();
@@ -484,6 +484,8 @@ void term()
 	}
 }
 
+
+// Syntactic class for factor
 void factor()
 {
 	if (currToken == identsym)
@@ -515,13 +517,14 @@ void factor()
 
 }
 
-// ERROR If next token is not ; end ident call begin if while read write 
+// Check that the token following a statement is valid
 int checkValidTokenAfterStatement()
 {
 	return (currToken == semicolonsym || currToken == beginsym || currToken == endsym || currToken == identsym || currToken == callsym
 		|| currToken == ifsym || currToken == whilesym || currToken == readsym || currToken == writesym);
 }
 
+// Check that the next token starts a factor class
 int checkFactorFollows()
 {
 	if (currToken == identsym || currToken == numbersym || currToken == lparentsym)
@@ -533,10 +536,11 @@ int checkFactorFollows()
 	}
 }
 
+// Check that the next token starts an expression class
 int checkExpressionFollows()
 {
 	if (currToken == plussym || currToken == minussym || currToken == identsym || 
-		currToken == numbersym || currToken == lparentsym)
+		currToken == numbersym || currToken == lparentsym || currToken == periodsym)
 		return 1;
 	else
 	{
@@ -546,6 +550,7 @@ int checkExpressionFollows()
 	
 }
 
+// Check that the next token starts a condition class
 void checkConditionFollows()
 {
 	if (!checkExpressionFollows() && currToken != oddsym)
@@ -555,6 +560,7 @@ void checkConditionFollows()
 	}
 }
 
+// Check if a variable is already declared
 void checkVarDeclared()
 {
 	int found = 0;
@@ -572,11 +578,13 @@ void checkVarDeclared()
 	}
 }
 
+// Check if the current token is a valid operator for a term
 int isTermOp()
 {
 	return (currToken == multsym || currToken == slashsym || currToken == modsym);
 }
 
+// Move the lexicographical level up
 void upLevel()
 {
 	currLevel++;
@@ -584,12 +592,14 @@ void upLevel()
 	currAddress = BASE_ADDR;
 }
 
+// Move the lexicographical level down
 void downLevel()
 {
 	currLevel--;
 	currAddress = prevAddress;
 }
 
+// Check if any errors are stored in the global variable error
 void errorCheck()
 {
 	if (error != 0)
@@ -599,6 +609,7 @@ void errorCheck()
 	}
 }
 
+// Print an error
 void errorend(int x)
 {
 	switch (x)
@@ -652,6 +663,7 @@ void errorend(int x)
 
 }
 
+// Print the symbol table
 void printtable()
 {
 	int i;
