@@ -11,7 +11,6 @@
 
 symbol *table;
 int sym_index;
-int num_symbols; // may be redundant
 int error;
 
 void program();
@@ -26,6 +25,11 @@ void expression();
 void term();
 void factor();
 int isTermOp();
+int checkExpressionFollows();
+void checkVarDeclared();
+void checkConditionFollows();
+int checkFactorFollows();
+void errorCheck();
 
 symbol initSymbol();
 void enterSymbol(int, char*, int, int);
@@ -52,7 +56,6 @@ symbol *parse(lexeme *input)
 	table = malloc(TABLE_SIZE * sizeof(symbol));
 	sym_index = 0;
 	error = 0;
-	num_symbols = 0;
 	tokens = input;
 	token_index = -1;
 	currLevel = 0;
@@ -94,11 +97,12 @@ symbol initSymbol()
 void enterSymbol(int type, char* name, int level, int valOrAddr)
 {
 	// check for conflicting idents
-	for (int i = 0; i < num_symbols; i++)
+	for (int i = 0; i < sym_index; i++)
 	{
 		if (strcmp(table[i].name, name) == 0)
 		{
-			// print error
+			errorend(1);
+			exit(0);
 		}
 	}
 
@@ -128,7 +132,6 @@ void enterSymbol(int type, char* name, int level, int valOrAddr)
 
 	table[sym_index] = s;
 	sym_index++;
-	num_symbols++;
 }
 
 int checkSymbolTable(char *s)
@@ -172,6 +175,7 @@ void block()
 	}
 
 	statement();
+	errorCheck();
 }
 
 void const_declaraton()
@@ -305,8 +309,11 @@ void proc_declaration()
 
 void statement()
 {
+	errorCheck();
+
 	if (currToken == identsym)
 	{
+		checkVarDeclared();
 		getToken();
 		if (currToken != becomessym)
 		{
@@ -315,7 +322,7 @@ void statement()
 		}
 
 		getToken();
-
+		checkExpressionFollows();
 		expression();
 	}
 
@@ -327,6 +334,7 @@ void statement()
 			errorend(14);
 			exit(0);
 		}
+		checkVarDeclared();
 		getToken();
 	}
 
@@ -353,6 +361,7 @@ void statement()
 	else if (currToken == ifsym)
 	{
 		getToken();
+		checkConditionFollows();
 		condition();
 		if (currToken != thensym)
 		{
@@ -372,6 +381,7 @@ void statement()
 	else if (currToken == whilesym)
 	{
 		getToken();
+		checkConditionFollows();
 		condition();
 		if (currToken != dosym)
 		{
@@ -390,6 +400,7 @@ void statement()
 			errorend(14);
 			exit(0);
 		}
+		checkVarDeclared();
 		getToken();
 		statement();
 	}
@@ -397,6 +408,7 @@ void statement()
 	else if (currToken == writesym)
 	{
 		getToken();
+		checkExpressionFollows();
 		expression();
 		getToken();
 		statement();
@@ -413,10 +425,12 @@ void condition()
 	if (currToken == oddsym)
 	{
 		getToken();
+		checkExpressionFollows();
 		expression();
 	}
 	else
 	{
+		checkExpressionFollows();
 		expression();
 		if (!rel_op())
 		{
@@ -424,6 +438,7 @@ void condition()
 			exit(0);
 		}
 		getToken();
+		checkExpressionFollows();
 		expression();
 	}
 }
@@ -452,19 +467,21 @@ void expression()
 
 void term()
 {
+	checkFactorFollows();
 	factor();
 	while (isTermOp())
 	{
 		getToken();
+		checkFactorFollows();
 		factor();
 	}
-
 }
 
 void factor()
 {
 	if (currToken == identsym)
 	{
+		checkVarDeclared();
 		getToken();
 	}
 	else if (currToken == numbersym)
@@ -480,6 +497,7 @@ void factor()
 	else if (currToken == lparentsym)
 	{
 		getToken();
+		checkExpressionFollows();
 		expression();
 		if (currToken != rparentsym)
 		{
@@ -496,6 +514,56 @@ void factor()
 
 }
 
+int checkFactorFollows()
+{
+	if (currToken == identsym || currToken == numbersym || currToken == lparentsym)
+		return 1;
+	else
+	{
+		error = 2;
+		return 0;
+	}
+}
+
+int checkExpressionFollows()
+{
+	if (currToken == plussym || currToken == minussym || currToken == identsym || 
+		currToken == numbersym || currToken == lparentsym)
+		return 1;
+	else
+	{
+		error = 2;
+		return 0;
+	}
+	
+}
+
+void checkConditionFollows()
+{
+	if (!checkExpressionFollows() && currToken != oddsym)
+	{
+		errorend(11);
+		exit(0);
+	}
+}
+
+void checkVarDeclared()
+{
+	int found = 0;
+
+	for (int i = 0; i < sym_index; i++)
+	{
+		if (strcmp(table[i].name, currLex.name) == 0)
+			found = 1;
+	}
+
+	if (!found)
+	{
+		errorend(7);
+		exit(0);
+	}
+}
+
 int isTermOp()
 {
 	return (currToken == multsym || currToken == slashsym || currToken == modsym);
@@ -510,8 +578,17 @@ void upLevel()
 
 void downLevel()
 {
-	currLevel++;
+	currLevel--;
 	currAddress = prevAddress;
+}
+
+void errorCheck()
+{
+	if (error != 0)
+	{
+		errorend(error);
+		exit(0);
+	}
 }
 
 void errorend(int x)
