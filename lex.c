@@ -11,7 +11,7 @@
 #include <string.h>
 #include "compiler.h"
 
-#define CHAR_MAX 11
+#define RES_MAX_LEN 11
 #define INT_MAX_DIGITS 5
 #define NORW 14 // number of reserved words
 #define NUM_SYM 17 // number of symbols
@@ -23,7 +23,7 @@ int input_char_count;
 
 // Constants for valid reserved symbols and keywords
 const char symbols[NUM_SYM][3] = {"==", "<>", "<", "<=", ">", ">=", "%", "*", "/", "+", "-", "(", ")", ",", ".", ";", ":="};
-const char reserved[NORW][CHAR_MAX] = {"const", "var", "procedure", "call", "if", "then", "else", "while", "do",
+const char reserved[NORW][RES_MAX_LEN] = {"const", "var", "procedure", "call", "if", "then", "else", "while", "do",
 									"begin", "end", "read", "write", "odd"};
 
 void printerror(int type);
@@ -272,7 +272,7 @@ lexeme identOrKeyword(char* input)
 {
 	lexeme currLex;
 	int chCnt = 0;
-	char str[CHAR_MAX + 1];
+	char str[RES_MAX_LEN + 1];
 	char ch = input[input_char_count];
 	do
 	{
