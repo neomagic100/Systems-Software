@@ -1,7 +1,17 @@
+/*********************************************************************
+ *  Assignment 3: Parser                                             *
+ *  COP 3402 Summer 2021                                             *
+ *  Authors: Willow Maddox                                           *
+ *           Michael Bernhardt                                       *
+ *********************************************************************/
+
+// Included libraries
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "compiler.h"
+
+// Constants
 #define TABLE_SIZE 1000
 #define CONSTANT 1
 #define VARIABLE 2
@@ -9,17 +19,19 @@
 #define MAX_CHARS 12
 #define BASE_ADDR 3
 
+// Global variables and pointers
 symbol *table;
-int sym_index;
-int error;
-int currToken;
-lexeme currLex;
-int token_index;
 lexeme *tokens;
+lexeme currLex;
+int sym_index;
+int currToken;
+int token_index;
 int currLevel;
 int currAddress;
 int prevAddress;
+int error;
 
+// Functions
 void program();
 void block();
 void statement();
@@ -42,12 +54,11 @@ symbol initSymbol();
 void upLevel();
 void downLevel();
 void enterSymbol(int, char*, int, int);
-int checkSymbolTable(char *s);
 void getToken();
 void printtable();
 void errorend(int x);
 
-// Parse a lexeme list
+// Parse a lexeme list into a symbol table
 symbol *parse(lexeme *input)
 {
 	table = malloc(TABLE_SIZE * sizeof(symbol));
@@ -107,13 +118,14 @@ void enterSymbol(int type, char* name, int level, int val)
 		}
 	}
 
+	// Assign values to symbol
 	symbol s;
 	s.mark = 0;
 	strcpy(s.name, name);
 	s.kind = type;
 	s.level = level;
 
-
+	// Assign const type
 	if (type == CONSTANT)
 	{
 		s.val = val;
@@ -122,6 +134,8 @@ void enterSymbol(int type, char* name, int level, int val)
 	{
 		s.val = 0;
 	}
+	
+	// Assign var type
 	if (type == VARIABLE)
 	{
 		s.addr = currAddress++;
@@ -131,20 +145,9 @@ void enterSymbol(int type, char* name, int level, int val)
 		s.addr = 0;
 	}
 
+	// Add sym to table
 	table[sym_index] = s;
 	sym_index++;
-}
-
-// Check if an identifier is already declared
-int checkSymbolTable(char *s)
-{
-	for (int i = 0; i <= token_index; i++)
-	{
-		if (strcmp(s, table[i].name) == 0)
-			return i;
-	}
-
-	return -1;
 }
 
 // Syntactic class - Top level of top down recursion parsing
@@ -182,6 +185,7 @@ void const_declaraton()
 {
 	do
 	{
+		// Create a constant sym
 		symbol sym = initSymbol();
 		sym.kind = 1;
 
@@ -193,6 +197,7 @@ void const_declaraton()
 			exit(0);
 		}
 
+		// Copy ident name to sym
 		strcpy(sym.name, currLex.name);
 		getToken();
 
@@ -212,7 +217,7 @@ void const_declaraton()
 
 		sym.val = currLex.value;
 
-		// add to symbol table
+		// Add to symbol table
 		enterSymbol(CONSTANT, sym.name, currLevel, sym.val);
 
 		getToken();
@@ -233,8 +238,6 @@ void var_declaration()
 {
 	do
 	{
-		char name[MAX_CHARS];
-
 		getToken();
 
 		if (currToken != identsym)
@@ -243,9 +246,7 @@ void var_declaration()
 			exit(0);
 		}
 
-		strcpy(name, currLex.name);
-
-		enterSymbol(VARIABLE, name, currLevel, 0);
+		enterSymbol(VARIABLE, currLex.name, currLevel, 0);
 
 		getToken();
 
@@ -286,7 +287,7 @@ void proc_declaration()
 
 		getToken();
 
-		// Go to next level before calling block for procedure, then go down a level
+		// Go to next level before calling block, then go down a level
 		upLevel();
 		block();
 		downLevel();
@@ -321,7 +322,8 @@ void statement()
 		getToken();
 		checkExpressionFollows();
 		expression();
-		// ERROR If next token is not ; end ident call begin if while read write 
+		
+		// ERROR If next token is not ; end ident call begin if while read write
 		if(!checkValidTokenAfterStatement())
 		{
 			errorend(2);
@@ -346,6 +348,7 @@ void statement()
 		getToken();
 		statement();
 
+		// Begins next statement/skips over multiple ;'s
 		while (currToken == semicolonsym)
 		{
 			getToken();
@@ -488,16 +491,16 @@ void term()
 // Syntactic class for factor
 void factor()
 {
-	if (currToken == identsym)
+	if (currToken == identsym) // ident
 	{
 		checkVarDeclared();
 		getToken();
 	}
-	else if (currToken == numbersym)
+	else if (currToken == numbersym) // num
 	{
 		getToken();
 	}
-	else if (currToken == lparentsym)
+	else if (currToken == lparentsym) // left paren
 	{
 		getToken();
 		checkExpressionFollows();
@@ -520,14 +523,18 @@ void factor()
 // Check that the token following a statement is valid
 int checkValidTokenAfterStatement()
 {
-	return (currToken == semicolonsym || currToken == beginsym || currToken == endsym || currToken == identsym || currToken == callsym
-		|| currToken == ifsym || currToken == whilesym || currToken == readsym || currToken == writesym);
+	return (currToken == semicolonsym || currToken == beginsym 
+			|| currToken == endsym || currToken == identsym 
+			|| currToken == callsym || currToken == ifsym 
+			|| currToken == whilesym || currToken == readsym 
+			|| currToken == writesym);
 }
 
 // Check that the next token starts a factor class
 int checkFactorFollows()
 {
-	if (currToken == identsym || currToken == numbersym || currToken == lparentsym)
+	if (currToken == identsym || currToken == numbersym 
+		|| currToken == lparentsym)
 		return 1;
 	else
 	{
@@ -539,8 +546,9 @@ int checkFactorFollows()
 // Check that the next token starts an expression class
 int checkExpressionFollows()
 {
-	if (currToken == plussym || currToken == minussym || currToken == identsym || 
-		currToken == numbersym || currToken == lparentsym || currToken == periodsym)
+	if (currToken == plussym || currToken == minussym || currToken == identsym
+		|| currToken == numbersym || currToken == lparentsym 
+		|| currToken == periodsym)
 		return 1;
 	else
 	{
@@ -581,7 +589,8 @@ void checkVarDeclared()
 // Check if the current token is a valid operator for a term
 int isTermOp()
 {
-	return (currToken == multsym || currToken == slashsym || currToken == modsym);
+	return (currToken == multsym || currToken == slashsym 
+			|| currToken == modsym);
 }
 
 // Move the lexicographical level up
@@ -671,5 +680,6 @@ void printtable()
 	printf("Kind | Name        | Value | Level | Address\n");
 	printf("------------------------------------------------------\n");
 	for (i = 0; i < sym_index; i++)
-		printf("%4d | %11s | %5d | %5d | %5d\n", table[i].kind, table[i].name, table[i].val, table[i].level, table[i].addr);
+		printf("%4d | %11s | %5d | %5d | %5d\n", table[i].kind, table[i].name, 
+				table[i].val, table[i].level, table[i].addr);
 }
