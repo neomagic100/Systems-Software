@@ -416,7 +416,6 @@ void statement()
 		getToken();
 		checkExpressionFollows();
 		expression();
-		getToken();
 		statement();
 	}
 
