@@ -134,7 +134,7 @@ void enterSymbol(int type, char* name, int level, int val)
 	{
 		s.val = 0;
 	}
-	
+
 	// Assign var type
 	if (type == VARIABLE)
 	{
@@ -171,9 +171,9 @@ void program()
 void block()
 {
 	if (currToken == constsym) const_declaraton();
-	
+
 	if (currToken == varsym) var_declaration();
-	
+
 	if (currToken == procsym) proc_declaration();
 
 	statement();
@@ -322,7 +322,7 @@ void statement()
 		getToken();
 		checkExpressionFollows();
 		expression();
-		
+
 		// ERROR If next token is not ; end ident call begin if while read write
 		if(!checkValidTokenAfterStatement())
 		{
@@ -523,17 +523,17 @@ void factor()
 // Check that the token following a statement is valid
 int checkValidTokenAfterStatement()
 {
-	return (currToken == semicolonsym || currToken == beginsym 
-			|| currToken == endsym || currToken == identsym 
-			|| currToken == callsym || currToken == ifsym 
-			|| currToken == whilesym || currToken == readsym 
+	return (currToken == semicolonsym || currToken == beginsym
+			|| currToken == endsym || currToken == periodsym
+			|| currToken == callsym || currToken == ifsym
+			|| currToken == whilesym || currToken == readsym
 			|| currToken == writesym);
 }
 
 // Check that the next token starts a factor class
 int checkFactorFollows()
 {
-	if (currToken == identsym || currToken == numbersym 
+	if (currToken == identsym || currToken == numbersym
 		|| currToken == lparentsym)
 		return 1;
 	else
@@ -547,7 +547,7 @@ int checkFactorFollows()
 int checkExpressionFollows()
 {
 	if (currToken == plussym || currToken == minussym || currToken == identsym
-		|| currToken == numbersym || currToken == lparentsym 
+		|| currToken == numbersym || currToken == lparentsym
 		|| currToken == periodsym)
 		return 1;
 	else
@@ -555,7 +555,7 @@ int checkExpressionFollows()
 		error = 2;
 		return 0;
 	}
-	
+
 }
 
 // Check that the next token starts a condition class
@@ -589,7 +589,7 @@ void checkVarDeclared()
 // Check if the current token is a valid operator for a term
 int isTermOp()
 {
-	return (currToken == multsym || currToken == slashsym 
+	return (currToken == multsym || currToken == slashsym
 			|| currToken == modsym);
 }
 
@@ -680,6 +680,6 @@ void printtable()
 	printf("Kind | Name        | Value | Level | Address\n");
 	printf("------------------------------------------------------\n");
 	for (i = 0; i < sym_index; i++)
-		printf("%4d | %11s | %5d | %5d | %5d\n", table[i].kind, table[i].name, 
+		printf("%4d | %11s | %5d | %5d | %5d\n", table[i].kind, table[i].name,
 				table[i].val, table[i].level, table[i].addr);
 }
