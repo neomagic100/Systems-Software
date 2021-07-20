@@ -526,7 +526,7 @@ int checkValidTokenAfterStatement()
 			|| currToken == endsym || currToken == periodsym
 			|| currToken == callsym || currToken == ifsym
 			|| currToken == whilesym || currToken == readsym
-			|| currToken == writesym);
+			|| currToken == writesym || currToken == elsesym);
 }
 
 // Check that the next token starts a factor class
@@ -551,7 +551,6 @@ int checkExpressionFollows()
 		return 1;
 	else
 	{
-		error = 2;
 		return 0;
 	}
 
@@ -560,7 +559,7 @@ int checkExpressionFollows()
 // Check that the next token starts a condition class
 void checkConditionFollows()
 {
-	if (!checkExpressionFollows() && currToken != oddsym)
+	if (!checkExpressionFollows() && currToken != oddsym && !rel_op())
 	{
 		errorend(11);
 		exit(0);
