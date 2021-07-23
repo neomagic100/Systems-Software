@@ -18,6 +18,9 @@ int currLevel;
 int currAddress;
 int prevAddress;
 
+// New variables
+int jmpCodeAddr;
+
 instruction *code;
 int code_index;
 
@@ -27,12 +30,16 @@ void block();
 void statement();
 void const_declaraton();
 void var_declaration();
-void proc_declaration();
+void proc_declaration(); // Each procedure must keep track of its own AR and var space
 void condition();
 int rel_op();
 void expression();
 void term();
 void factor();
+
+// New functions
+int genCode(int, int, int);
+int findToken(char*);
 
 void getToken();
 void printcode();
@@ -46,10 +53,24 @@ instruction *generate_code(lexeme *tokens, symbol *symbols)
 	currAddress = prevAddress = 3;
 	sym_table = symbols;
 	lex_tokens = tokens;
-
+	jmpCodeAddr = 0; //FIXME Initialized to 0
 
 	printcode();
 	return code;
+}
+
+int genCode(int op, int l, int m)
+{
+	int addr = m; //FIXME placeholder
+	instruction currInstr;
+
+	return addr;
+}
+
+// Find token in symbol table
+int findToken(char* ident)
+{
+	//TODO 
 }
 
 // Update the global varables to get the next token
@@ -66,6 +87,18 @@ void program()
 
 void block()
 {
+	//TODO taken from pseudocode
+	curLevel++;
+	int space = 4; //FIXME 3 for AR, 1 for Proc?
+	jmpCodeAddr = genCode(/*op l m*/);
+	if (currToken == constsym) const_declaration();
+	if (currToken == varsym) space += var_declaration();
+	if (currToken == procsym) proc_declaration();
+	code[jmpCodeAddr].m = NEXT_CODE_ADDR; // FIXME declare and define NEXT_CODE_ADDR
+	genCode(INC, 0, space);
+	statement();
+	genCode(RTN, 0, 0);
+	currLevel--;
 
 }
 
