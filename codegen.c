@@ -1,5 +1,5 @@
 /*
-	Author: 
+	Author:
 */
 
 #include <stdlib.h>
@@ -7,17 +7,111 @@
 #include <string.h>
 #include "compiler.h"
 
+// Global variables and pointers
+symbol *sym_table;
+lexeme *lex_tokens;
+lexeme currLex;
+int sym_index;
+int currToken;
+int token_index;
+int currLevel;
+int currAddress;
+int prevAddress;
+
 instruction *code;
 int code_index;
 
+// Functions
+void program();
+void block();
+void statement();
+void const_declaraton();
+void var_declaration();
+void proc_declaration();
+void condition();
+int rel_op();
+void expression();
+void term();
+void factor();
+
+void getToken();
 void printcode();
 
 instruction *generate_code(lexeme *tokens, symbol *symbols)
 {
 	code = malloc(500 * sizeof(instruction));
-	code_index = 0;
+	sym_index = code_index = 0;
+	token_index = -1;
+	currLevel = 0;
+	currAddress = prevAddress = 3;
+	sym_table = symbols;
+	lex_tokens = tokens;
+
+
 	printcode();
 	return code;
+}
+
+// Update the global varables to get the next token
+void getToken()
+{
+	currToken = tokens[++token_index].type;
+	currLex = tokens[token_index];
+}
+
+void program()
+{
+
+}
+
+void block()
+{
+
+}
+
+void statement()
+{
+
+}
+
+void const_declaraton()
+{
+
+}
+
+void var_declaration()
+{
+
+}
+
+void proc_declaration()
+{
+
+}
+
+void condition()
+{
+	// Gen code for comparisons
+}
+
+int rel_op()
+{
+
+}
+
+void expression()
+{
+	// Gen code for + or -
+}
+
+void term()
+{
+	// Gen code for term op here
+}
+
+void factor()
+{
+
 }
 
 void printcode()
