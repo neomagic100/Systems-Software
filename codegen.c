@@ -7,6 +7,12 @@
 #include <string.h>
 #include "compiler.h"
 
+typedef enum op_code {
+	LIT = 1, OPR, LOD, STO, CAL, INC, JMP, JPC, SYS,
+	RTN = 0, NEG, ADD, SUB, MUL, DIV, ODD, MOD, EQL, NEQ, LSS, LEQ, GTR, GEQ,
+	OUT = 1, IN, HALT,
+} op_code;
+
 // Global variables and pointers
 symbol *sym_table;
 lexeme *lex_tokens;
@@ -20,6 +26,7 @@ int prevAddress;
 
 // New variables
 int jmpCodeAddr;
+int sym_table_size;
 
 instruction *code;
 int code_index;
@@ -28,8 +35,8 @@ int code_index;
 void program();
 void block();
 void statement();
-void const_declaraton();
-void var_declaration();
+void const_declaration();
+int var_declaration();
 void proc_declaration(); // Each procedure must keep track of its own AR and var space
 void condition();
 int rel_op();
@@ -40,6 +47,8 @@ void factor();
 // New functions
 int genCode(int, int, int);
 int findToken(char*);
+void getSymTableSize();
+int isTermOp();
 
 void getToken();
 void printcode();
@@ -54,72 +63,241 @@ instruction *generate_code(lexeme *tokens, symbol *symbols)
 	sym_table = symbols;
 	lex_tokens = tokens;
 	jmpCodeAddr = 0; //FIXME Initialized to 0
+	getSymTableSize(); //FIXME don't know if better way
+	program();
 
-	printcode();
+	//printcode();
 	return code;
 }
 
 int genCode(int op, int l, int m)
 {
-	int addr = m; //FIXME placeholder
+	int addr;
 	instruction currInstr;
+
+	currInstr.opcode = op;
+	currInstr.l = l;
+	currInstr.m = m;
+
+	code[code_index++] = currInstr;
 
 	return addr;
 }
 
+// Dirty way to get size of symbol table
+void getSymTableSize()
+{
+	int tableSize = 0;
+	for (int i = 0; i < 500; i++)
+	{
+		if (sym_table[i].kind == 1 || sym_table[i].kind == 2 || sym_table[i].kind == 3) tableSize++;
+		else break;
+	}
+
+	sym_table_size = tableSize;
+}
+
 // Find token in symbol table
+// Return index if found, 0 if not
 int findToken(char* ident)
 {
-	//TODO 
+	for (int i = sym_table_size - 1; i >= 0; i--)
+	{
+		// Need to match name and level, and has to not be marked
+		// Mark is 1 at start
+		if (strcmp(sym_table[i].name, ident) == 0 && currLevel == sym_table[i].level
+				&& sym_table[i].mark == 0)
+			return i;
+	}
+
+	return 0;
+
 }
 
 // Update the global varables to get the next token
 void getToken()
 {
-	currToken = tokens[++token_index].type;
-	currLex = tokens[token_index];
+	currToken = lex_tokens[++token_index].type;
+	currLex = lex_tokens[token_index];
 }
 
 void program()
 {
-
+	// Gen code for main
+	genCode(JMP, 0, 666); //FIXME Start at first instruction executed
+	sym_table[sym_index++].mark = 0;
+	getToken();
+	block();
 }
 
 void block()
 {
 	//TODO taken from pseudocode
-	curLevel++;
-	int space = 4; //FIXME 3 for AR, 1 for Proc?
-	jmpCodeAddr = genCode(/*op l m*/);
+	currLevel++;
+	int space = 3;
+
+	jmpCodeAddr = genCode(0,0,0);//FIXME
+
 	if (currToken == constsym) const_declaration();
 	if (currToken == varsym) space += var_declaration();
 	if (currToken == procsym) proc_declaration();
-	code[jmpCodeAddr].m = NEXT_CODE_ADDR; // FIXME declare and define NEXT_CODE_ADDR
+	code[jmpCodeAddr].m = 0;//NEXT_CODE_ADDR; // FIXME declare and define NEXT_CODE_ADDR
 	genCode(INC, 0, space);
 	statement();
-	genCode(RTN, 0, 0);
-	currLevel--;
 
+	// If the current lexicographical level is greater than 0, return. Otherwise halt
+	if (currLevel > 0)
+	{
+		genCode(OPR, 0, RTN);
+		currLevel--;
+	}
+	else genCode(SYS, 0, HALT);
 }
 
 void statement()
 {
+	if (currToken == identsym)	// ident
+	{
+		getToken(); // :=
+		getToken(); // get next token
 
+		expression();
+	}
+
+	else if (currToken == callsym) // call
+	{ //TODO THIS WILL NEED A LOT OF WORK FOR CODEGEN
+		getToken();
+
+
+		getToken();
+	}
+
+	else if (currToken == beginsym) // begin
+	{
+		getToken();
+		statement();
+
+		// Begins next statement/skips over multiple ;'s
+		while (currToken == semicolonsym)
+		{
+			getToken();
+			statement();
+		}
+
+		getToken();
+	}
+
+	else if (currToken == ifsym) // if
+	{
+		getToken();
+		condition();
+		getToken(); // next token after then
+		statement();
+
+		if (currToken == elsesym)
+		{
+			getToken();
+			statement();
+		}
+	}
+
+	else if (currToken == whilesym) // while
+	{
+		getToken();
+
+		condition();
+
+		getToken();
+		statement();
+	}
+
+	else if (currToken == readsym) // read
+	{
+		getToken();
+
+		getToken();
+		statement();
+	}
+
+	else if (currToken == writesym) // write
+	{
+		getToken();
+
+		expression();
+		statement();
+	}
+
+	else // catch for null statement
+	{
+		return;
+	}
 }
 
-void const_declaraton()
+// Syntactic class for constant declaration
+void const_declaration()
 {
+	int constIdx;
+	do
+	{
+		getToken(); // ident
 
+		sym_table[sym_index++].mark = 0;
+
+		getToken(); // :=
+		getToken(); // number
+		getToken(); // comma or semicolon
+	}
+	while (currToken == commasym);
+
+	getToken(); // get next token
 }
 
-void var_declaration()
+int var_declaration()
 {
+	int varIdx;
+	int numVarsDeclared = 0;
+	do
+	{
+		getToken(); // ident
 
+		// Unmark variable
+		sym_table[sym_index++].mark = 0;
+
+		getToken(); // comma or semicolon
+		numVarsDeclared++;
+	}
+	while (currToken == commasym);
+
+	getToken(); // get next token
+
+	return numVarsDeclared;
 }
 
 void proc_declaration()
 {
+	int procIdx;
 
+	// INC space for AR
+	genCode(INC, 0, 3); // FIXME correct place to generate INC?
+
+	do
+	{
+		getToken(); // ident
+
+		sym_table[sym_index++].mark = 0;
+
+		getToken(); // semicolon
+		getToken(); // get next token
+
+		// Go to next level before calling block, then go down a level
+		//upLevel();
+		block(); // levels adjusted in block
+		//downLevel();
+
+		getToken(); // get next token
+
+	}
+	while(currToken == procsym);
 }
 
 void condition()
@@ -135,17 +313,90 @@ int rel_op()
 void expression()
 {
 	// Gen code for + or -
+	int minus = (currToken == minussym);
+	if (currToken == plussym || currToken == minussym)
+		getToken(); // number (either ident, number, or "("expression")")
+
+	// If number is literal or const, emit lit
+	if (currLex.type == numbersym)
+		genCode(LIT, 0, currLex.value); // 0 or currLevel?
+	else if (currLex.type == constsym)
+	{
+		int idx = findToken(currLex.name);
+		genCode(LIT, 0, sym_table[idx].val);
+	}
+	if (minus)
+		genCode(OPR, 0, NEG);
+
+	term();
+
+	while (currToken == plussym || currToken == minussym)
+	{
+		int currOperation = currToken;
+		getToken();
+
+		// If number is literal or const, emit lit
+		if (currLex.type == numbersym)
+			genCode(LIT, 0, currLex.value); // 0 or currLevel?
+		else if (currLex.type == constsym)
+		{
+			int idx = findToken(currLex.name);
+			genCode(LIT, 0, sym_table[idx].val);
+		}
+
+		term();
+
+		// Gen code for add or sub
+		if (currOperation == plussym)
+			genCode(OPR, 0, ADD);
+		else if (currOperation == minussym)
+			genCode(OPR, 0, SUB);
+	}
 }
 
 void term()
 {
 	// Gen code for term op here
+	factor();
+	while (isTermOp())
+	{
+		int currOperation = currToken;
+		getToken();
+		factor();
+
+		// Gen code for Mul, div, mod
+		if (currOperation == multsym)
+			genCode(OPR, 0, MUL);
+		else if (currOperation == slashsym)
+			genCode(OPR, 0, DIV);
+		else if (currOperation == modsym)
+			genCode(OPR, 0, MOD);
+	}
 }
 
 void factor()
 {
+	if (currToken == identsym) // ident
+		getToken();
 
+	else if (currToken == numbersym) // num
+		getToken();
+
+	else if (currToken == lparentsym) // left paren
+	{
+		getToken();
+		expression();
+		getToken();
+	}
 }
+
+// Check if the current token is a valid operator for a term
+int isTermOp()
+{
+	return (currToken == multsym || currToken == slashsym
+			|| currToken == modsym);
+}
+
 
 void printcode()
 {
