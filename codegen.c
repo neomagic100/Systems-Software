@@ -10,7 +10,7 @@
 typedef enum op_code {
 	LIT = 1, OPR, LOD, STO, CAL, INC, JMP, JPC, SYS,
 	RTN = 0, NEG, ADD, SUB, MUL, DIV, ODD, MOD, EQL, NEQ, LSS, LEQ, GTR, GEQ,
-	OUT = 1, IN, HALT,
+	WRITE = 1, READ, HALT,
 } op_code;
 
 // Global variables and pointers
@@ -58,15 +58,15 @@ instruction *generate_code(lexeme *tokens, symbol *symbols)
 	code = malloc(500 * sizeof(instruction));
 	sym_index = code_index = 0;
 	token_index = -1;
-	currLevel = 0;
+	currLevel = -1; // Starting at -1 so man block starts at 0
 	currAddress = prevAddress = 3;
 	sym_table = symbols;
 	lex_tokens = tokens;
-	jmpCodeAddr = 0; //FIXME Initialized to 0
+	jmpCodeAddr = 3; //FIXME Initialized to 3
 	getSymTableSize(); //FIXME don't know if better way
 	program();
 
-	//printcode();
+	printcode();
 	return code;
 }
 
@@ -124,7 +124,7 @@ void getToken()
 void program()
 {
 	// Gen code for main
-	genCode(JMP, 0, 666); //FIXME Start at first instruction executed
+	genCode(JMP, 0, jmpCodeAddr); //Start at first instruction executed
 	sym_table[sym_index++].mark = 0;
 	getToken();
 	block();
@@ -136,12 +136,12 @@ void block()
 	currLevel++;
 	int space = 3;
 
-	jmpCodeAddr = genCode(0,0,0);//FIXME
+	//jmpCodeAddr = genCode(0,0,0);//FIXME
 
 	if (currToken == constsym) const_declaration();
 	if (currToken == varsym) space += var_declaration();
 	if (currToken == procsym) proc_declaration();
-	code[jmpCodeAddr].m = 0;//NEXT_CODE_ADDR; // FIXME declare and define NEXT_CODE_ADDR
+//	code[jmpCodeAddr].m = 0;//NEXT_CODE_ADDR; // FIXME declare and define NEXT_CODE_ADDR
 	genCode(INC, 0, space);
 	statement();
 
@@ -158,10 +158,14 @@ void statement()
 {
 	if (currToken == identsym)	// ident
 	{
+		int identToStoreIdx = findToken(currLex.name);
 		getToken(); // :=
 		getToken(); // get next token
 
 		expression();
+
+		// Store assignment to variable
+		genCode(STO, currLevel - sym_table[identToStoreIdx].level, sym_table[identToStoreIdx].addr);
 	}
 
 	else if (currToken == callsym) // call
@@ -214,8 +218,16 @@ void statement()
 	else if (currToken == readsym) // read
 	{
 		getToken();
+		int identToStoreIdx = findToken(currLex.name);
 
 		getToken();
+		
+		// Read from input
+		genCode(SYS, 0, READ);
+
+		// Store value read to ident
+		genCode(STO, currLevel - sym_table[identToStoreIdx].level, sym_table[identToStoreIdx].addr);
+
 		statement();
 	}
 
@@ -224,6 +236,10 @@ void statement()
 		getToken();
 
 		expression();
+
+		// Write to output
+		genCode(SYS, 0, WRITE);
+
 		statement();
 	}
 
@@ -317,8 +333,16 @@ void expression()
 	if (currToken == plussym || currToken == minussym)
 		getToken(); // number (either ident, number, or "("expression")")
 
+	// If variable, find and load
+	if (currLex.type == identsym)
+	{
+		int varIdx = findToken(currLex.name);
+		symbol currSym = sym_table[varIdx];
+		genCode(LOD, currLevel - currSym.level, currSym.addr);
+	}
+
 	// If number is literal or const, emit lit
-	if (currLex.type == numbersym)
+	else if (currLex.type == numbersym)
 		genCode(LIT, 0, currLex.value); // 0 or currLevel?
 	else if (currLex.type == constsym)
 	{
@@ -346,6 +370,12 @@ void expression()
 
 		term();
 
+		if (currLex.type == identsym)
+		{
+			int varIdx = findToken(currLex.name);
+			symbol currSym = sym_table[varIdx];
+			genCode(LOD, currLevel - currSym.level, currSym.addr);
+		}
 		// Gen code for add or sub
 		if (currOperation == plussym)
 			genCode(OPR, 0, ADD);
@@ -362,6 +392,12 @@ void term()
 	{
 		int currOperation = currToken;
 		getToken();
+		
+		if (currToken == numbersym)
+		{
+			genCode(LIT, 0, currLex.value);
+		}
+
 		factor();
 
 		// Gen code for Mul, div, mod
