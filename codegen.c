@@ -319,6 +319,46 @@ void proc_declaration()
 void condition()
 {
 	// Gen code for comparisons
+	if (currToken == oddsym)
+	{
+		getToken();
+		expression();
+		genCode(OPR, 0, ODD);
+	}
+	else
+	{
+		
+		expression();
+		int relop = currToken;
+	
+		getToken(); // get token after relop
+		expression();
+
+		// After both sides of expression generated, generate code for for comparison
+		switch(relop) {
+			case eqlsym:
+				genCode(OPR, 0, EQL);
+				break;
+			case neqsym:
+				genCode(OPR, 0, NEQ);
+				break;
+			case lessym:
+				genCode(OPR, 0, LSS);
+				break;
+			case leqsym:
+				genCode(OPR, 0, LEQ);
+				break;
+			case gtrsym:
+				genCode(OPR, 0, GTR);
+				break;
+			case geqsym:
+				genCode(OPR, 0, GEQ);
+				break;
+			default:
+				break;
+		}
+
+	}
 }
 
 int rel_op()
