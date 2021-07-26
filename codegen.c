@@ -107,7 +107,8 @@ int findToken(char* ident)
 	{
 		// Need to match name and level, and has to not be marked
 		// Mark is 1 at start
-		if (strcmp(sym_table[i].name, ident) == 0 /*&& currLevel == sym_table[i].level*/
+		if (strcmp(sym_table[i].name, ident) == 0
+				&& currLevel == sym_table[i].level
 				&& sym_table[i].mark == 0)
 			return i;
 	}
@@ -173,11 +174,6 @@ int var_declaration()
 
 void proc_declaration()
 {
-	int procIdx;
-
-	// INC space for AR
-	//genCode(INC, 0, 3); // FIXME correct place to generate INC?
-
 	do
 	{
 		getToken(); // ident
@@ -209,7 +205,6 @@ void program()
 
 void block()
 {
-
 	//TODO taken from pseudocode
 	currLevel++;
 	int space = 3;
@@ -219,10 +214,12 @@ void block()
 	if (currToken == constsym) const_declaration();
 	if (currToken == varsym) space += var_declaration();
 	if (currToken == procsym) proc_declaration();
-//	code[jmpCodeAddr].m = 0;//NEXT_CODE_ADDR; // FIXME declare and define NEXT_CODE_ADDR
+	//code[jmpCodeAddr].m = 0;//NEXT_CODE_ADDR; // FIXME declare and define NEXT_CODE_ADDR
 	if (currLevel == 0) code[0].m = code_index;
 	// Store the code_index in the value field of procedure symbol in table
+	
 	sym_table[sym_index].val = code_index;
+	
 	genCode(INC, 0, space);
 	statement();
 
