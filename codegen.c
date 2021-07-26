@@ -201,6 +201,7 @@ void program()
 	sym_table[sym_index++].mark = 0;
 	getToken();
 	block();
+	genCode(SYS, 0, HALT); // end of program
 }
 
 void block()
