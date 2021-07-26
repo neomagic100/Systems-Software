@@ -71,6 +71,7 @@ instruction *generate_code(lexeme *tokens, symbol *symbols)
 	return code;
 }
 
+// emit function
 int genCode(int op, int l, int m)
 {
 	int addr;
