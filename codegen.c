@@ -304,10 +304,10 @@ void statement()
 		int jpcIdx, jmpIdx;
 
 		getToken();
-		jmpIdx = code_index * 3;
+		jmpIdx = code_index;
 		condition();
 		getToken();
-		jpcIdx = code_index * 3;
+		jpcIdx = code_index;
 		genCode(JPC, 0, jpcIdx);
 		statement();
 		genCode(JMP, 0, jmpIdx);
@@ -405,53 +405,18 @@ void expression()
 	if (currToken == plussym || currToken == minussym)
 		getToken(); // number (either ident, number, or "("expression")")
 
-	// If variable, find and load
-	//if (currLex.type == identsym)
-	/*if (currLex.type != numbersym)
-	{
-		int varIdx = findToken(currLex.name);
-		symbol currSym = sym_table[varIdx];
-		if (currSym.kind == 2)
-			genCode(LOD, currLevel - currSym.level, currSym.addr);
-		else
-			genCode(LIT, currLevel - currSym.level, currSym.val);
-	}*/
+	term();
 
-	// If number is literal or const, emit lit
-	//else// if (currLex.type == numbersym)
-		//genCode(LIT, 0, currLex.value); // 0 or currLevel?
-	/*else if (currLex.type == constsym)
-	{
-		int idx = findToken(currLex.name);
-		genCode(LIT, 0, sym_table[idx].val);
-	}*/
 	if (minus)
 		genCode(OPR, 0, NEG);
-
-	term();
 
 	while (currToken == plussym || currToken == minussym)
 	{
 		int currOperation = currToken;
 		getToken();
 
-		// If number is literal or const, emit lit
-	/*	if (currLex.type == numbersym)
-			genCode(LIT, 0, currLex.value); // 0 or currLevel?
-		else if (currLex.type == constsym)
-		{
-			int idx = findToken(currLex.name);
-			genCode(LIT, 0, sym_table[idx].val);
-		}*/
-
 		term();
 
-	/*	if (currLex.type == identsym)
-		{
-			int varIdx = findToken(currLex.name);
-			symbol currSym = sym_table[varIdx];
-			genCode(LOD, currLevel - currSym.level, currSym.addr);
-		}*/
 		// Gen code for add or sub
 		if (currOperation == plussym)
 			genCode(OPR, 0, ADD);
@@ -468,11 +433,6 @@ void term()
 	{
 		int currOperation = currToken;
 		getToken();
-		
-		/*if (currToken == numbersym)
-		{
-			genCode(LIT, 0, currLex.value);
-		}*/
 
 		factor();
 
