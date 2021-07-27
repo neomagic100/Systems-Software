@@ -287,7 +287,7 @@ void statement()
 		if (currToken == elsesym)
 		{
 			getToken();
-			jmpIdx = code_index * 3;
+			jmpIdx = code_index;
 			genCode(JMP, 0, jmpIdx);
 			code[jpcIdx].m = code_index * 3;
 			statement();
