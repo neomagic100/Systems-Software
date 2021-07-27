@@ -108,7 +108,7 @@ int findToken(char* ident)
 		// Need to match name and level, and has to not be marked
 		// Mark is 1 at start
 		if (strcmp(sym_table[i].name, ident) == 0
-				&& currLevel == sym_table[i].level
+				&& currLevel >= sym_table[i].level
 				&& sym_table[i].mark == 0)
 			return i;
 	}
@@ -184,9 +184,8 @@ void proc_declaration()
 		getToken(); // get next token
 
 		// Go to next level before calling block, then go down a level
-		//upLevel();
+
 		block(); // levels adjusted in block
-		//downLevel();
 
 		getToken(); // get next token
 
@@ -215,9 +214,9 @@ void block()
 	if (currToken == varsym) space += var_declaration();
 	if (currToken == procsym) proc_declaration();
 	//code[jmpCodeAddr].m = 0;//NEXT_CODE_ADDR; // FIXME declare and define NEXT_CODE_ADDR
-	if (currLevel == 0) code[0].m = code_index;
-	// Store the code_index in the value field of procedure symbol in table
+	if (currLevel == 0) code[0].m = code_index * 3;
 	
+	// Store the code_index in the value field of procedure symbol in table
 	sym_table[sym_index].val = code_index;
 	
 	genCode(INC, 0, space);
@@ -253,7 +252,7 @@ void statement()
 	{ //TODO THIS WILL NEED A LOT OF WORK FOR CODEGEN
 		getToken(); // get proc ident
 		int procSymIdx = findToken(currLex.name);
-		genCode(CAL, currLevel - sym_table[procSymIdx].level, sym_table[procSymIdx].val);
+		genCode(CAL, currLevel - sym_table[procSymIdx].level, sym_table[procSymIdx].val * 3);
 
 		getToken();
 	}
@@ -279,7 +278,7 @@ void statement()
 		getToken();
 		condition();
 
-		jpcIdx = code_index;
+		jpcIdx = code_index * 3;
 		genCode(JPC, 0, jpcIdx);
 
 		getToken(); // next token after then
@@ -288,15 +287,15 @@ void statement()
 		if (currToken == elsesym)
 		{
 			getToken();
-			jmpIdx = code_index;
+			jmpIdx = code_index * 3;
 			genCode(JMP, 0, jmpIdx);
-			code[jpcIdx].m = code_index;
+			code[jpcIdx].m = code_index * 3;
 			statement();
-			code[jmpIdx].m = code_index;
+			code[jmpIdx].m = code_index * 3;
 		}
 		else
 		{
-			code[jpcIdx].m = code_index;
+			code[jpcIdx].m = code_index * 3;
 		}
 	}
 
@@ -305,14 +304,14 @@ void statement()
 		int jpcIdx, jmpIdx;
 
 		getToken();
-		jmpIdx = code_index;
+		jmpIdx = code_index * 3;
 		condition();
 		getToken();
-		jpcIdx = code_index;
+		jpcIdx = code_index * 3;
 		genCode(JPC, 0, jpcIdx);
 		statement();
 		genCode(JMP, 0, jmpIdx);
-		code[jpcIdx].m = code_index;
+		code[jpcIdx].m = code_index * 3;
 	}
 
 	else if (currToken == readsym) // read
@@ -408,19 +407,19 @@ void expression()
 
 	// If variable, find and load
 	//if (currLex.type == identsym)
-	if (currLex.type != numbersym)
+	/*if (currLex.type != numbersym)
 	{
 		int varIdx = findToken(currLex.name);
 		symbol currSym = sym_table[varIdx];
 		if (currSym.kind == 2)
 			genCode(LOD, currLevel - currSym.level, currSym.addr);
 		else
-			genCode(LOD, currLevel - currSym.level, currSym.val);
-	}
+			genCode(LIT, currLevel - currSym.level, currSym.val);
+	}*/
 
 	// If number is literal or const, emit lit
-	else// if (currLex.type == numbersym)
-		genCode(LIT, 0, currLex.value); // 0 or currLevel?
+	//else// if (currLex.type == numbersym)
+		//genCode(LIT, 0, currLex.value); // 0 or currLevel?
 	/*else if (currLex.type == constsym)
 	{
 		int idx = findToken(currLex.name);
@@ -437,22 +436,22 @@ void expression()
 		getToken();
 
 		// If number is literal or const, emit lit
-		if (currLex.type == numbersym)
+	/*	if (currLex.type == numbersym)
 			genCode(LIT, 0, currLex.value); // 0 or currLevel?
 		else if (currLex.type == constsym)
 		{
 			int idx = findToken(currLex.name);
 			genCode(LIT, 0, sym_table[idx].val);
-		}
+		}*/
 
 		term();
 
-		if (currLex.type == identsym)
+	/*	if (currLex.type == identsym)
 		{
 			int varIdx = findToken(currLex.name);
 			symbol currSym = sym_table[varIdx];
 			genCode(LOD, currLevel - currSym.level, currSym.addr);
-		}
+		}*/
 		// Gen code for add or sub
 		if (currOperation == plussym)
 			genCode(OPR, 0, ADD);
@@ -470,10 +469,10 @@ void term()
 		int currOperation = currToken;
 		getToken();
 		
-		if (currToken == numbersym)
+		/*if (currToken == numbersym)
 		{
 			genCode(LIT, 0, currLex.value);
-		}
+		}*/
 
 		factor();
 
@@ -489,11 +488,23 @@ void term()
 
 void factor()
 {
-	if (currToken == identsym) // ident
+	if (currToken == identsym)  // ident	
+	{
+		int varIdx = findToken(currLex.name);
+		symbol currSym = sym_table[varIdx];
+		if (currSym.kind == 2)
+			genCode(LOD, currLevel - currSym.level, currSym.addr);
+		else
+			genCode(LIT, 0, currSym.val);
+		
 		getToken();
+	}
 
 	else if (currToken == numbersym) // num
+	{
+		genCode(LIT, 0, currLex.value);
 		getToken();
+	}
 
 	else if (currToken == lparentsym) // left paren
 	{
