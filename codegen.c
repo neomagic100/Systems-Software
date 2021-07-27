@@ -303,14 +303,14 @@ void statement()
 	{
 		int jpcIdx, jmpIdx;
 
-		getToken();
+		getToken(); // ident or num
 		jmpIdx = code_index;
 		condition();
-		getToken();
+		getToken();	// do
 		jpcIdx = code_index;
 		genCode(JPC, 0, jpcIdx);
 		statement();
-		genCode(JMP, 0, jmpIdx);
+		genCode(JMP, 0, jmpIdx * 3);
 		code[jpcIdx].m = code_index * 3;
 	}
 
