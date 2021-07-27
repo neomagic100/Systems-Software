@@ -278,7 +278,7 @@ void statement()
 		getToken();
 		condition();
 
-		jpcIdx = code_index * 3;
+		jpcIdx = code_index;
 		genCode(JPC, 0, jpcIdx);
 
 		getToken(); // next token after then
