@@ -181,7 +181,7 @@ void proc_declaration()
 
 		// Go to next level before calling block, then go down a level
 
-		currProc = sym_index - 1;
+		sym_table[sym_index - 1].val = code_index + 1;
 		block(); // levels adjusted in block
 
 		getToken(); // get next token
@@ -252,9 +252,9 @@ void statement()
 		int procSymIdx = findToken(currLex.name);
 
 		// TODO: Figure out how to track the current procedure
-		sym_table[currProc].val = code_index;
+		// sym_table[currProc+1].val = code_index;
 
-		genCode(CAL, currLevel - sym_table[procSymIdx].level, sym_table[procSymIdx].val * 3);
+		genCode(CAL, currLevel - sym_table[procSymIdx].level, sym_table[procSymIdx].val);
 
 		getToken();
 	}
