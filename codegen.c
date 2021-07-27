@@ -173,7 +173,8 @@ void proc_declaration()
 	do
 	{
 		getToken(); // ident
-
+		// Store the code_index in the value field of procedure symbol in table
+		sym_table[sym_index].val = code_index;
 		sym_table[sym_index++].mark = 0; // Unmark procedure
 
 		getToken(); // semicolon
@@ -181,7 +182,7 @@ void proc_declaration()
 
 		// Go to next level before calling block, then go down a level
 
-		sym_table[sym_index - 1].val = code_index + 1;
+		currProc = sym_index - 1;
 		block(); // levels adjusted in block
 
 		getToken(); // get next token
@@ -211,8 +212,7 @@ void block()
 	// Set first Jump to main
 	if (currLevel == 0) code[0].m = code_index * 3;
 	
-	// Store the code_index in the value field of procedure symbol in table
-	sym_table[sym_index].val = code_index;
+	
 	
 	genCode(INC, 0, space);
 	statement();
@@ -252,9 +252,9 @@ void statement()
 		int procSymIdx = findToken(currLex.name);
 
 		// TODO: Figure out how to track the current procedure
-		// sym_table[currProc+1].val = code_index;
+		//sym_table[currProc].val = code_index;
 
-		genCode(CAL, currLevel - sym_table[procSymIdx].level, sym_table[procSymIdx].val);
+		genCode(CAL, currLevel - sym_table[procSymIdx].level, sym_table[procSymIdx].val * 3);
 
 		getToken();
 	}
