@@ -251,9 +251,6 @@ void statement()
 		getToken(); // get proc ident
 		int procSymIdx = findToken(currLex.name);
 
-		// TODO: Figure out how to track the current procedure
-		//sym_table[currProc].val = code_index;
-
 		genCode(CAL, currLevel - sym_table[procSymIdx].level, sym_table[procSymIdx].val * 3);
 
 		getToken();
