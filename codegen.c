@@ -21,7 +21,7 @@ typedef enum op_code {
 symbol *sym_table;
 lexeme *lex_tokens;
 lexeme currLex;
-int sym_index;
+int symbol_index;
 int currToken;
 int token_index;
 int currLevel;
@@ -54,7 +54,7 @@ instruction *generate_code(lexeme *tokens, symbol *symbols)
 {
 	code = malloc(500 * sizeof(instruction));
 	currProc = 0;
-	sym_index = code_index = 0;
+	symbol_index = code_index = 0;
 	token_index = -1;
 	currLevel = -1; // Starting at -1 so main block starts at 0
 	sym_table = symbols;
@@ -112,7 +112,7 @@ int findToken(char* ident)
 
 void markProcVars()
 {
-	int idx = sym_index - 1;
+	int idx = symbol_index - 1;
 
 	// from last variable in procedure to procedure symbol
 	while (sym_table[idx].kind != 3 && idx > 0)
@@ -134,7 +134,7 @@ void const_declaration()
 		getToken(); // ident
 
 		// Unmark constant
-		sym_table[sym_index++].mark = 0;
+		sym_table[symbol_index++].mark = 0;
 
 		getToken(); // :=
 		getToken(); // number
@@ -154,7 +154,7 @@ int var_declaration()
 	{
 		getToken(); // ident
 
-		sym_table[sym_index++].mark = 0; // Unmark variable
+		sym_table[symbol_index++].mark = 0; // Unmark variable
 
 		getToken(); // comma or semicolon
 
@@ -174,15 +174,15 @@ void proc_declaration()
 	{
 		getToken(); // ident
 		// Store the code_index in the value field of procedure symbol in table
-		sym_table[sym_index].val = code_index;
-		sym_table[sym_index++].mark = 0; // Unmark procedure
+		sym_table[symbol_index].val = code_index;
+		sym_table[symbol_index++].mark = 0; // Unmark procedure
 
 		getToken(); // semicolon
 		getToken(); // get next token
 
 		// Go to next level before calling block, then go down a level
 
-		currProc = sym_index - 1;
+		currProc = symbol_index - 1;
 		block(); // levels adjusted in block
 
 		getToken(); // get next token
@@ -194,7 +194,7 @@ void proc_declaration()
 void program()
 {
 	genCode(JMP, 0, 0); // First instruction to jump to main procedure
-	sym_table[sym_index++].mark = 0;
+	sym_table[symbol_index++].mark = 0;
 	getToken();
 	block();
 }
@@ -208,12 +208,12 @@ void block()
 	if (currToken == constsym) const_declaration();
 	if (currToken == varsym) space += var_declaration();
 	if (currToken == procsym) proc_declaration();
-	
+
 	// Set first Jump to main
 	if (currLevel == 0) code[0].m = code_index * 3;
 	
-	
-	
+
+
 	genCode(INC, 0, space);
 	statement();
 
@@ -247,7 +247,7 @@ void statement()
 	}
 
 	else if (currToken == callsym) // call
-	{ 
+	{
 		getToken(); // get proc ident
 		int procSymIdx = findToken(currLex.name);
 
@@ -319,7 +319,7 @@ void statement()
 		int identToStoreIdx = findToken(currLex.name);
 
 		getToken();
-		
+
 		// Read from input
 		genCode(SYS, 0, READ);
 
@@ -360,7 +360,7 @@ void condition()
 	{
 		expression();
 		int relop = currToken; // store conditional operation
-	
+
 		getToken(); // get token after relop
 		expression();
 
@@ -439,7 +439,7 @@ void term()
 // Syntactic class for factor
 void factor()
 {
-	if (currToken == identsym)  // ident	
+	if (currToken == identsym)  // ident
 	{
 		// ident used, find var or const in symbol table
 		int varIdx = findToken(currLex.name);
@@ -448,7 +448,7 @@ void factor()
 			genCode(LOD, currLevel - currSym.level, currSym.addr);
 		else
 			genCode(LIT, 0, currSym.val);
-		
+
 		getToken();
 	}
 
